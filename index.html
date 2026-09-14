@@ -552,6 +552,11 @@
       color: #24753d;
     }
 
+    .status-icon.rejected {
+      background: #fff0f0;
+      color: #a33;
+    }
+
     .status-title {
       font-size: 24px;
       font-weight: bold;
@@ -2382,6 +2387,12 @@ main,
       completedDescription:
         '주문 준비가 완료되었습니다.',
 
+      rejectedTitle:
+        '주문 진행이 어렵습니다',
+
+      rejectedDescription:
+        '현재 주문을 진행하기 어렵습니다. 아래 안내 내용을 확인해주세요.',
+
       estimateLabel:
         '예상 조리시간',
 
@@ -2509,6 +2520,12 @@ main,
 
       completedDescription:
         'Your order is ready.',
+
+      rejectedTitle:
+        'Unable to Process Your Order',
+
+      rejectedDescription:
+        'We are unable to process this order at this time. Please check the message below.',
 
       estimateLabel:
         'Estimated Preparation Time',
@@ -2643,6 +2660,12 @@ main,
       completedDescription:
         'ご注文の準備が完了しました。',
 
+      rejectedTitle:
+        'ご注文を承ることができません',
+
+      rejectedDescription:
+        '現在このご注文を承ることができません。下記のご案内をご確認ください。',
+
       estimateLabel:
         '予想調理時間',
 
@@ -2770,6 +2793,12 @@ main,
 
       completedDescription:
         '您的订单已准备完成。',
+
+      rejectedTitle:
+        '暂时无法受理您的订单',
+
+      rejectedDescription:
+        '目前无法处理此订单，请查看以下说明。',
 
       estimateLabel:
         '预计制作时间',
@@ -4894,7 +4923,7 @@ function changeCutleryQty(change) {
           'orders'
         )
         .select(
-          'id, room_number, status, created_at, ordered_at, accepted_at, completed_at, estimated_minutes'
+          'id, room_number, status, created_at, ordered_at, accepted_at, completed_at, estimated_minutes, rejection_reason, rejected_at'
         )
         .eq(
           'order_token',
@@ -5007,6 +5036,31 @@ function changeCutleryQty(change) {
 
     else if (
       status ===
+      'rejected'
+    ) {
+
+      statusIcon.textContent =
+        '×';
+
+
+      statusTitle.textContent =
+        t('rejectedTitle');
+
+
+      statusDescription.textContent =
+        order.rejection_reason ||
+        t('rejectedDescription');
+
+
+      newOrderButton.classList.add(
+        'show'
+      );
+
+    }
+
+
+    else if (
+      status ===
       'cooking'
     ) {
 
@@ -5059,8 +5113,12 @@ function changeCutleryQty(change) {
 
     if (
       minutes > 0 &&
-      status !==
-      'pending'
+      (
+        status ===
+        'cooking' ||
+        status ===
+        'completed'
+      )
     ) {
 
       estimateBox.classList.add(
