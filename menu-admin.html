@@ -3842,101 +3842,46 @@ function fillCategorySelect() {
    한국어 → 영어 / 일본어 / 중국어
 ========================= */
 
-async function translateText(
-  text,
-  targetLanguage
-) {
+async function sleepTranslation(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-  const sourceText =
-    String(
-      text || ''
-    ).trim();
+async function translateText(text, targetLanguage, maxRetries = 3) {
+  const sourceText = String(text || '').trim();
+  if (!sourceText) return '';
+  if (!['en','ja','zh'].includes(targetLanguage)) throw new Error('지원하지 않는 번역 언어입니다.');
 
-  if (!sourceText) {
-    return '';
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+    try {
+      const { data, error } = await supabaseClient.functions.invoke('hyper-action', {
+        body: { text: sourceText, target: targetLanguage }
+      });
+      if (error) throw new Error(error.message || 'Edge Function 호출 실패');
+      const translated = data && typeof data.translatedText === 'string' ? data.translatedText.trim() : '';
+      if (!translated) throw new Error('빈 번역 결과');
+      return translated;
+    } catch (error) {
+      lastError = error;
+      console.warn(`TRANSLATE RETRY ${attempt}/${maxRetries}:`, targetLanguage, sourceText, error);
+      if (attempt < maxRetries) await sleepTranslation(900 * attempt);
+    }
   }
+  throw new Error(`번역 실패 (${targetLanguage}) · ${lastError?.message || '알 수 없는 오류'}`);
+}
 
-
-  if (
-    ![
-      'en',
-      'ja',
-      'zh'
-    ].includes(
-      targetLanguage
-    )
-  ) {
-
-    throw new Error(
-      '지원하지 않는 번역 언어입니다.'
-    );
-
+async function translateTextSafe(text, targetLanguage, label, failures) {
+  const sourceText = String(text || '').trim();
+  if (!sourceText) return '';
+  try {
+    const result = await translateText(sourceText, targetLanguage, 3);
+    await sleepTranslation(250);
+    return result;
+  } catch (error) {
+    console.error('TRANSLATE SKIPPED:', label, targetLanguage, error);
+    failures.push(`${label} / ${targetLanguage.toUpperCase()}`);
+    return null;
   }
-
-
-  /*
-    브라우저에서 Google 번역 주소를 직접 호출하면
-    CORS 정책 때문에 실패할 수 있으므로
-    Supabase Edge Function을 통해 서버에서 번역합니다.
-  */
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .functions
-      .invoke(
-        'hyper-action',
-        {
-          body: {
-            text:
-              sourceText,
-            target:
-              targetLanguage
-          }
-        }
-      );
-
-
-  if (error) {
-
-    console.error(
-      'TRANSLATE EDGE FUNCTION ERROR:',
-      error
-    );
-
-    throw new Error(
-      '자동 번역 함수 호출에 실패했습니다. ' +
-      (
-        error.message ||
-        ''
-      )
-    );
-
-  }
-
-
-  if (
-    !data ||
-    typeof data.translatedText !==
-      'string' ||
-    !data.translatedText.trim()
-  ) {
-
-    console.error(
-      'TRANSLATE EDGE FUNCTION INVALID RESPONSE:',
-      data
-    );
-
-    throw new Error(
-      '자동 번역 결과를 받지 못했습니다.'
-    );
-
-  }
-
-
-  return data.translatedText.trim();
-
 }
 
 
@@ -4341,29 +4286,85 @@ async function addNewMenu() {
 
 async function translateAllContent() {
   if (!confirm('현재 한국어 내용을 기준으로 메뉴와 카테고리를 전체 번역하시겠습니까?\n\n번역관리에서 잠금한 항목은 덮어쓰지 않습니다.')) return;
-  const button=document.getElementById('translate-all-content-button'); if(button){button.disabled=true;button.textContent='전체 번역 중...';}
-  showSaving('전체 번역 준비 중...');
+
+  const button = document.getElementById('translate-all-content-button');
+  if (button) { button.disabled = true; button.textContent = '전체 번역 중...'; }
+  const failures = [];
+
   try {
     await loadTranslationLocks();
-    for (const category of categoryDraft.filter(c=>c&&c!=='all')) {
+    const categories = categoryDraft.filter(c => c && c !== 'all');
+    let categoryDone = 0;
+
+    for (const category of categories) {
+      categoryDone += 1;
       if (isCategoryTranslationLocked(category)) continue;
-      const ko=(categoryTranslations[category]?.ko||category||'').trim();
-      const [en,ja,zh]=await Promise.all([translateText(ko,'en'),translateText(ko,'ja'),translateText(ko,'zh')]);
-      categoryTranslations[category]={ko,en,ja,zh};
+      const ko = String(categoryTranslations[category]?.ko || category || '').trim();
+      if (!ko) continue;
+      showSaving(`카테고리 번역 중... ${categoryDone} / ${categories.length}`);
+
+      const current = categoryTranslations[category] || {};
+      const en = await translateTextSafe(ko, 'en', `카테고리 ${ko}`, failures);
+      const ja = await translateTextSafe(ko, 'ja', `카테고리 ${ko}`, failures);
+      const zh = await translateTextSafe(ko, 'zh', `카테고리 ${ko}`, failures);
+      categoryTranslations[category] = {
+        ko,
+        en: en === null ? (current.en || category) : en,
+        ja: ja === null ? (current.ja || category) : ja,
+        zh: zh === null ? (current.zh || category) : zh
+      };
     }
     await saveCategoryTranslations();
-    let done=0;
-    for (const menu of allMenus) {
-      if (isMenuTranslationLocked(menu.id)) continue;
-      const name=(menu.name||'').trim(), description=(menu.description||'').trim(); if(!name) continue;
-      const [nameEn,nameJa,nameZh,descriptionEn,descriptionJa,descriptionZh]=await Promise.all([translateText(name,'en'),translateText(name,'ja'),translateText(name,'zh'),description?translateText(description,'en'):Promise.resolve(''),description?translateText(description,'ja'):Promise.resolve(''),description?translateText(description,'zh'):Promise.resolve('')]);
-      const {error}=await supabaseClient.from('menus').update({name_en:nameEn||null,name_ja:nameJa||null,name_zh:nameZh||null,description_en:descriptionEn||null,description_ja:descriptionJa||null,description_zh:descriptionZh||null}).eq('id',menu.id);
-      if(error) throw error; done++; showSaving(`메뉴 전체 번역 중... ${done} / ${allMenus.length}`);
+
+    const targets = allMenus.filter(menu => !isMenuTranslationLocked(menu.id) && String(menu.name || '').trim());
+    for (let index = 0; index < targets.length; index += 1) {
+      const menu = targets[index];
+      const name = String(menu.name || '').trim();
+      const description = String(menu.description || '').trim();
+      showSaving(`메뉴 전체 번역 중... ${index + 1} / ${targets.length} · ${name}`);
+
+      const nameEn = await translateTextSafe(name, 'en', `${name} 메뉴명`, failures);
+      const nameJa = await translateTextSafe(name, 'ja', `${name} 메뉴명`, failures);
+      const nameZh = await translateTextSafe(name, 'zh', `${name} 메뉴명`, failures);
+      const descriptionEn = description ? await translateTextSafe(description, 'en', `${name} 설명`, failures) : '';
+      const descriptionJa = description ? await translateTextSafe(description, 'ja', `${name} 설명`, failures) : '';
+      const descriptionZh = description ? await translateTextSafe(description, 'zh', `${name} 설명`, failures) : '';
+
+      const updateData = {};
+      if (nameEn !== null) updateData.name_en = nameEn || null;
+      if (nameJa !== null) updateData.name_ja = nameJa || null;
+      if (nameZh !== null) updateData.name_zh = nameZh || null;
+      if (descriptionEn !== null) updateData.description_en = descriptionEn || null;
+      if (descriptionJa !== null) updateData.description_ja = descriptionJa || null;
+      if (descriptionZh !== null) updateData.description_zh = descriptionZh || null;
+
+      if (Object.keys(updateData).length) {
+        const { error } = await supabaseClient.from('menus').update(updateData).eq('id', menu.id);
+        if (error) {
+          console.error('MENU TRANSLATION SAVE ERROR:', menu.id, error);
+          failures.push(`${name} / DB 저장`);
+        }
+      }
+      await sleepTranslation(350);
     }
-    await loadMenus(); showSaving('전체 번역 완료'); setTimeout(hideSaving,1200); alert('전체 번역이 완료되었습니다.\n필요한 번역은 번역관리 페이지에서 검수해주세요.');
-  } catch(error) { console.error('FULL TRANSLATION ERROR:',error); hideSaving(); alert('전체 번역 중 오류가 발생했습니다.\n'+(error.message||'')); }
-  finally { if(button){button.disabled=false;button.textContent='전체 번역';} }
+
+    await loadMenus();
+    hideSaving();
+    if (failures.length) {
+      const preview = failures.slice(0, 12).join('\n- ');
+      alert(`전체 번역 작업이 끝났습니다.\n\n성공한 번역은 모두 저장됐고, 실패한 ${failures.length}개 항목만 건너뛰었습니다.\n\n- ${preview}${failures.length > 12 ? '\n- 외 ' + (failures.length - 12) + '개' : ''}\n\n번역관리에서 실패 항목만 확인해주세요.`);
+    } else {
+      alert('전체 번역이 완료되었습니다.\n번역관리 페이지에서 검수해주세요.');
+    }
+  } catch (error) {
+    console.error('FULL TRANSLATION ERROR:', error);
+    hideSaving();
+    alert('전체 번역 처리 중 저장 오류가 발생했습니다.\n' + (error.message || ''));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = '전체 번역'; }
+  }
 }
+
 
 async function translateAllCategories() {
 
