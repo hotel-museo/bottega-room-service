@@ -851,7 +851,7 @@ header p {
 
     <div class="tip-box" style="margin-bottom:14px;">
       <b>메뉴관리는 한국어만 수정합니다.</b><br>
-      메뉴명 · 메뉴설명 · 카테고리를 모두 정리한 뒤 <b>전체 번역</b>을 한 번 눌러 영어 · 일본어 · 중국어를 일괄 갱신합니다.<br>
+      메뉴명 · 메뉴설명 · 카테고리를 모두 정리한 뒤 <b>전체 번역</b>을 누르면 한국어 → 영어 → 일본어·중국어 순서로 번역합니다.<br>
       개별 번역 검수와 수정은 왼쪽 <b>번역관리</b> 페이지에서 할 수 있습니다.
       <div style="margin-top:10px;">
         <button type="button" class="btn btn-black" id="translate-all-content-button" onclick="translateAllContent()">전체 번역</button>
@@ -4285,7 +4285,7 @@ async function addNewMenu() {
 }
 
 async function translateAllContent() {
-  if (!confirm('현재 한국어 내용을 기준으로 메뉴와 카테고리를 전체 번역하시겠습니까?\n\n번역관리에서 잠금한 항목은 덮어쓰지 않습니다.')) return;
+  if (!confirm('한국어 → 영어 번역 후, 확정된 영어를 기준으로 일본어 · 중국어를 전체 번역하시겠습니까?\n\n번역관리에서 잠금한 항목은 덮어쓰지 않습니다.')) return;
 
   const button = document.getElementById('translate-all-content-button');
   if (button) { button.disabled = true; button.textContent = '전체 번역 중...'; }
@@ -4304,12 +4304,21 @@ async function translateAllContent() {
       showSaving(`카테고리 번역 중... ${categoryDone} / ${categories.length}`);
 
       const current = categoryTranslations[category] || {};
-      const en = await translateTextSafe(ko, 'en', `카테고리 ${ko}`, failures);
-      const ja = await translateTextSafe(ko, 'ja', `카테고리 ${ko}`, failures);
-      const zh = await translateTextSafe(ko, 'zh', `카테고리 ${ko}`, failures);
+      const translatedEn = await translateTextSafe(ko, 'en', `카테고리 ${ko} / 영어`, failures);
+      const finalEn = translatedEn === null ? String(current.en || '').trim() : translatedEn;
+
+      let ja = null;
+      let zh = null;
+      if (finalEn) {
+        ja = await translateTextSafe(finalEn, 'ja', `카테고리 ${ko} / 일본어(영어 기준)`, failures);
+        zh = await translateTextSafe(finalEn, 'zh', `카테고리 ${ko} / 중국어(영어 기준)`, failures);
+      } else {
+        failures.push(`카테고리 ${ko} / 영어 원문 없음 → 일본어·중국어 건너뜀`);
+      }
+
       categoryTranslations[category] = {
         ko,
-        en: en === null ? (current.en || category) : en,
+        en: finalEn || current.en || category,
         ja: ja === null ? (current.ja || category) : ja,
         zh: zh === null ? (current.zh || category) : zh
       };
@@ -4323,20 +4332,51 @@ async function translateAllContent() {
       const description = String(menu.description || '').trim();
       showSaving(`메뉴 전체 번역 중... ${index + 1} / ${targets.length} · ${name}`);
 
-      const nameEn = await translateTextSafe(name, 'en', `${name} 메뉴명`, failures);
-      const nameJa = await translateTextSafe(name, 'ja', `${name} 메뉴명`, failures);
-      const nameZh = await translateTextSafe(name, 'zh', `${name} 메뉴명`, failures);
-      const descriptionEn = description ? await translateTextSafe(description, 'en', `${name} 설명`, failures) : '';
-      const descriptionJa = description ? await translateTextSafe(description, 'ja', `${name} 설명`, failures) : '';
-      const descriptionZh = description ? await translateTextSafe(description, 'zh', `${name} 설명`, failures) : '';
+      // 1단계: 한국어 → 영어
+      const translatedNameEn = await translateTextSafe(name, 'en', `${name} 메뉴명 / 영어`, failures);
+      const finalNameEn = translatedNameEn === null ? String(menu.name_en || '').trim() : translatedNameEn;
+
+      let translatedDescriptionEn = '';
+      let finalDescriptionEn = '';
+      if (description) {
+        translatedDescriptionEn = await translateTextSafe(description, 'en', `${name} 설명 / 영어`, failures);
+        finalDescriptionEn = translatedDescriptionEn === null ? String(menu.description_en || '').trim() : translatedDescriptionEn;
+      }
+
+      // 2단계: 확정된 영어 → 일본어 / 중국어
+      let nameJa = null;
+      let nameZh = null;
+      if (finalNameEn) {
+        nameJa = await translateTextSafe(finalNameEn, 'ja', `${name} 메뉴명 / 일본어(영어 기준)`, failures);
+        nameZh = await translateTextSafe(finalNameEn, 'zh', `${name} 메뉴명 / 중국어(영어 기준)`, failures);
+      } else {
+        failures.push(`${name} 메뉴명 / 영어 원문 없음 → 일본어·중국어 건너뜀`);
+      }
+
+      let descriptionJa = '';
+      let descriptionZh = '';
+      if (description && finalDescriptionEn) {
+        descriptionJa = await translateTextSafe(finalDescriptionEn, 'ja', `${name} 설명 / 일본어(영어 기준)`, failures);
+        descriptionZh = await translateTextSafe(finalDescriptionEn, 'zh', `${name} 설명 / 중국어(영어 기준)`, failures);
+      } else if (description && !finalDescriptionEn) {
+        descriptionJa = null;
+        descriptionZh = null;
+        failures.push(`${name} 설명 / 영어 원문 없음 → 일본어·중국어 건너뜀`);
+      }
 
       const updateData = {};
-      if (nameEn !== null) updateData.name_en = nameEn || null;
+      if (translatedNameEn !== null) updateData.name_en = finalNameEn || null;
       if (nameJa !== null) updateData.name_ja = nameJa || null;
       if (nameZh !== null) updateData.name_zh = nameZh || null;
-      if (descriptionEn !== null) updateData.description_en = descriptionEn || null;
-      if (descriptionJa !== null) updateData.description_ja = descriptionJa || null;
-      if (descriptionZh !== null) updateData.description_zh = descriptionZh || null;
+      if (description) {
+        if (translatedDescriptionEn !== null) updateData.description_en = finalDescriptionEn || null;
+        if (descriptionJa !== null) updateData.description_ja = descriptionJa || null;
+        if (descriptionZh !== null) updateData.description_zh = descriptionZh || null;
+      } else {
+        updateData.description_en = null;
+        updateData.description_ja = null;
+        updateData.description_zh = null;
+      }
 
       if (Object.keys(updateData).length) {
         const { error } = await supabaseClient.from('menus').update(updateData).eq('id', menu.id);
@@ -4352,9 +4392,9 @@ async function translateAllContent() {
     hideSaving();
     if (failures.length) {
       const preview = failures.slice(0, 12).join('\n- ');
-      alert(`전체 번역 작업이 끝났습니다.\n\n성공한 번역은 모두 저장됐고, 실패한 ${failures.length}개 항목만 건너뛰었습니다.\n\n- ${preview}${failures.length > 12 ? '\n- 외 ' + (failures.length - 12) + '개' : ''}\n\n번역관리에서 실패 항목만 확인해주세요.`);
+      alert(`전체 번역 작업이 끝났습니다.\n\n번역 순서: 한국어 → 영어 → 일본어·중국어\n성공한 번역은 저장됐고, 실패한 ${failures.length}개 항목은 기존 번역을 유지하거나 건너뛰었습니다.\n\n- ${preview}${failures.length > 12 ? '\n- 외 ' + (failures.length - 12) + '개' : ''}\n\n번역관리에서 영어를 검수한 뒤 필요한 메뉴만 일본어·중국어를 다시 생성할 수 있습니다.`);
     } else {
-      alert('전체 번역이 완료되었습니다.\n번역관리 페이지에서 검수해주세요.');
+      alert('전체 번역이 완료되었습니다.\n\n한국어 → 영어 → 일본어·중국어 순서로 번역했습니다.\n번역관리 페이지에서 영어를 먼저 검수해주세요.');
     }
   } catch (error) {
     console.error('FULL TRANSLATION ERROR:', error);
@@ -4364,7 +4404,6 @@ async function translateAllContent() {
     if (button) { button.disabled = false; button.textContent = '전체 번역'; }
   }
 }
-
 
 async function translateAllCategories() {
 
