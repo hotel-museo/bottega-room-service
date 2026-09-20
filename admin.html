@@ -823,7 +823,69 @@
         align-items: flex-start;
       }
     }
-  </style>
+  
+
+    /* =========================
+       주문카드 리뉴얼 - 세트메뉴/인쇄 준비
+    ========================= */
+    .order-card {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #e5e5e5;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+    }
+    .order-card.new-order-blink { animation: none; border: 2px solid #111; }
+    .order-card.new-order-blink .order-card-head { background:#111; color:#fff; }
+    .order-card-head {
+      display:flex; justify-content:space-between; align-items:center; gap:16px;
+      padding:18px 20px; background:#f7f7f7; border-bottom:1px solid #e8e8e8;
+    }
+    .order-card-head-left { display:flex; align-items:center; gap:14px; min-width:0; }
+    .order-room-big { font-size:26px; font-weight:800; white-space:nowrap; }
+    .order-meta { font-size:12px; line-height:1.65; opacity:.72; }
+    .order-card-body { padding:20px; }
+    .order-info-grid {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+      border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; margin-bottom:16px;
+    }
+    .order-info-cell { padding:12px 14px; background:#fff; border-right:1px solid #eee; }
+    .order-info-cell:last-child { border-right:0; }
+    .order-info-label { display:block; color:#888; font-size:11px; margin-bottom:5px; }
+    .order-info-value { display:block; font-size:14px; font-weight:700; word-break:break-word; }
+    .order-section-title { font-size:13px; font-weight:800; margin:18px 0 8px; }
+    .items { margin-bottom:0; background:#f7f7f7; padding:12px 14px; }
+    .item-row { padding:8px 0; border-bottom:1px solid #e8e8e8; align-items:flex-start; }
+    .item-row:last-child { border-bottom:0; }
+    .set-item-row { display:block; }
+    .set-item-main { display:flex; justify-content:space-between; gap:15px; font-weight:800; }
+    .set-components { margin-top:7px; padding-left:12px; border-left:2px solid #ccc; color:#555; font-size:12px; line-height:1.7; }
+    .request { margin-top:12px; margin-bottom:0; }
+    .cutlery-info { margin-top:10px; margin-bottom:0; }
+    .order-total-row {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-top:16px; padding-top:16px; border-top:2px solid #111;
+    }
+    .order-total-label { font-size:13px; font-weight:700; }
+    .order-total-price { font-size:22px; font-weight:900; }
+    .order-bottom-actions { display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:16px; }
+    .print-ready-button {
+      width:100%; border:1px solid #111; background:#fff; color:#111; border-radius:9px;
+      padding:13px 16px; font-size:14px; font-weight:800; cursor:pointer;
+    }
+    .print-ready-button:hover { background:#f3f3f3; }
+    .order-bottom-actions .action-area { margin:0; padding:0; border:0; }
+    .order-bottom-actions .action-button { height:100%; min-height:46px; }
+    .order-bottom-actions .pending-action-buttons { height:100%; }
+    @media(max-width:700px){
+      .order-card-head { align-items:flex-start; }
+      .order-room-big { font-size:22px; }
+      .order-info-grid { grid-template-columns:1fr 1fr; }
+      .order-info-cell:nth-child(2) { border-right:0; }
+      .order-info-cell:nth-child(-n+2) { border-bottom:1px solid #eee; }
+      .order-bottom-actions { grid-template-columns:1fr; }
+    }
+</style>
 
 <style>
   html:not(.auth-ready) body {
@@ -2223,7 +2285,7 @@ const bottegaAuthStorage = {
               class="action-button accept-button"
               onclick="openTimeModal(${Number(order.id)}, this)"
             >
-              수락
+              주문 접수하기
             </button>
 
             <button
@@ -3034,285 +3096,151 @@ const bottegaAuthStorage = {
      주문 카드 그리기
   ========================= */
 
+  function getSetComponentLines(item) {
+    const raw = item && (
+      item.set_components ||
+      item.components ||
+      item.set_component_text ||
+      item.component_text
+    );
+
+    if (!raw) return [];
+
+    if (typeof raw === 'string') {
+      return raw
+        .split(/\n|\s*\/\s*|\s*,\s*/)
+        .map(v => v.trim())
+        .filter(Boolean);
+    }
+
+    if (Array.isArray(raw)) {
+      return raw.map(component => {
+        if (typeof component === 'string') return component;
+        if (!component || typeof component !== 'object') return '';
+        const category = component.category || component.category_name || '';
+        const names = component.names || component.menu_names || component.selected_names || component.items || [];
+        const nameText = Array.isArray(names)
+          ? names.map(v => typeof v === 'string' ? v : (v?.name || v?.menu_name || '')).filter(Boolean).join(', ')
+          : String(names || '');
+        return [category, nameText].filter(Boolean).join(' : ');
+      }).filter(Boolean);
+    }
+
+    return [];
+  }
+
+  function printOrderPlaceholder(orderId) {
+    alert(`주문서 인쇄 기능 연결 예정입니다.\n주문번호 #${orderId}`);
+  }
+
   function renderOrders(
     orders
   ) {
+    const orderList = document.getElementById('order-list');
 
-    const orderList =
-      document
-        .getElementById(
-          'order-list'
-        );
-
-
-    if (
-      !orders.length
-    ) {
-
-      orderList.innerHTML =
-        '<div class="empty">해당 주문이 없습니다.</div>';
-
-
+    if (!orders.length) {
+      orderList.innerHTML = '<div class="empty">해당 주문이 없습니다.</div>';
       return;
-
     }
 
-
-    orderList.innerHTML =
-      orders
-        .map(
-          order => {
-
-
-            const status =
-              order.status ||
-              'pending';
-
-
-            const items =
-              Array.isArray(
-                order.order_items
-              )
-                ? order.order_items
-                : [];
-
-
-            const itemHtml =
-              items
-                .map(
-                  item => {
-
-
-                    const name =
-                      item.name ||
-                      item.menu_name ||
-                      '메뉴';
-
-
-                    const quantity =
-                      Number(
-                        item.quantity ||
-                        item.qty ||
-                        1
-                      );
-
-
-                    const price =
-                      Number(
-                        item.price ||
-                        0
-                      );
-
-
-                    return `
-
-                      <div class="item-row">
-
-                        <span>
-
-                          ${escapeHtml(name)}
-
-                          ×
-
-                          ${quantity}
-
-                        </span>
-
-
-                        <strong>
-
-                          ${
-                            (
-                              price *
-                              quantity
-                            )
-                              .toLocaleString()
-                          }원
-
-                        </strong>
-
-                      </div>
-
-                    `;
-
-                  }
-                )
-                .join('');
-
-
-            const createdAt =
-              formatDateTime(
-                order.created_at
-              );
-
-
-            const blinkClass =
-              status ===
-              'pending'
-                ? 'new-order-blink'
-                : '';
-
-
-            return `
-
-              <div class="order-card ${blinkClass}">
-
-                <div class="order-top">
-
-                  <div>
-
-                    <div class="room-number">
-
-                      객실
-
-                      ${escapeHtml(
-                        order.room_number ||
-                        '-'
-                      )}
-
-                    </div>
-
-
-                    <div class="order-time">
-
-                      주문번호 #${order.id}
-
-                      ·
-
-                      ${createdAt}
-
-                    </div>
-
-                  </div>
-
-
-                  <div
-                    class="status ${getStatusClass(status)}"
-                  >
-
-                    ${getStatusText(status)}
-
-                  </div>
-
-                </div>
-
-
-                <div class="guest-info">
-
-                  <strong>
-                    고객명
-                  </strong>
-
-                  ${escapeHtml(
-                    order.guest_name ||
-                    '-'
-                  )}
-
-                  <br>
-
-
-                  <strong>
-                    전화번호
-                  </strong>
-
-                  ${escapeHtml(
-                    order.phone ||
-                    '-'
-                  )}
-
-
-                  <div class="payment-row">
-
-                    <strong>
-                      결제방법
-                    </strong>
-
-                    <span
-                      class="payment-badge ${getPaymentClass(order.payment_method)}"
-                    >
-
-                      ${getPaymentText(order.payment_method)}
-
-                    </span>
-
-                  </div>
-
-                </div>
-
-
-                <div class="items">
-
-                  ${
-                    itemHtml ||
-                    '<div class="item-row">주문 메뉴 정보 없음</div>'
-                  }
-
-                </div>
-
-
-                ${
-                  order.request_note
-
-                    ? `
-
-                      <div class="request">
-
-                        <strong>
-                          요청사항
-                        </strong>
-
-                        <span class="request-text">
-                          ${escapeHtml(
-                            order.request_note
-                          )}
-                        </span>
-
-                      </div>
-
-                    `
-
-                    : ''
-                }
-
-
-                <div class="cutlery-info">
-
-                  <strong>
-                    일회용 식기
-                  </strong>
-
-                  <span class="cutlery-count">
-                    ${Number(order.disposable_cutlery_qty || 0)}개
-                  </span>
-
-                </div>
-
-
-                <div class="total">
-
-                  총
-
-                  ${
-                    Number(
-                      order.total_amount ||
-                      0
-                    )
-                      .toLocaleString()
-                  }원
-
-                </div>
-
-
-                ${getActionButton(order)}
-
+    orderList.innerHTML = orders.map(order => {
+      const status = order.status || 'pending';
+      const items = Array.isArray(order.order_items) ? order.order_items : [];
+
+      const itemHtml = items.map(item => {
+        const name = item.name || item.menu_name || '메뉴';
+        const quantity = Number(item.quantity || item.qty || 1);
+        const price = Number(item.price || 0);
+        const componentLines = getSetComponentLines(item);
+        const isSet = item.is_set === true || item.set_menu_id || componentLines.length > 0;
+
+        if (isSet) {
+          return `
+            <div class="item-row set-item-row">
+              <div class="set-item-main">
+                <span>${escapeHtml(name)} × ${quantity}</span>
+                <strong>${(price * quantity).toLocaleString()}원</strong>
               </div>
+              ${componentLines.length ? `
+                <div class="set-components">
+                  ${componentLines.map(line => `<div>└ ${escapeHtml(line)}</div>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
 
-            `;
+        return `
+          <div class="item-row">
+            <span>${escapeHtml(name)} × ${quantity}</span>
+            <strong>${(price * quantity).toLocaleString()}원</strong>
+          </div>
+        `;
+      }).join('');
 
-          }
-        )
-        .join('');
+      const createdAt = formatDateTime(order.created_at);
+      const blinkClass = status === 'pending' ? 'new-order-blink' : '';
 
+      return `
+        <div class="order-card ${blinkClass}">
+          <div class="order-card-head">
+            <div class="order-card-head-left">
+              <div class="order-room-big">객실 ${escapeHtml(order.room_number || '-')}</div>
+              <div class="order-meta">
+                주문번호 #${order.id}<br>
+                ${createdAt}
+              </div>
+            </div>
+            <div class="status ${getStatusClass(status)}">${getStatusText(status)}</div>
+          </div>
+
+          <div class="order-card-body">
+            <div class="order-info-grid">
+              <div class="order-info-cell">
+                <span class="order-info-label">고객명</span>
+                <span class="order-info-value">${escapeHtml(order.guest_name || '-')}</span>
+              </div>
+              <div class="order-info-cell">
+                <span class="order-info-label">전화번호</span>
+                <span class="order-info-value">${escapeHtml(order.phone || '-')}</span>
+              </div>
+              <div class="order-info-cell">
+                <span class="order-info-label">결제방법</span>
+                <span class="order-info-value">${getPaymentText(order.payment_method)}</span>
+              </div>
+              <div class="order-info-cell">
+                <span class="order-info-label">일회용 식기</span>
+                <span class="order-info-value">${Number(order.disposable_cutlery_qty || 0)}개</span>
+              </div>
+            </div>
+
+            <div class="order-section-title">주문 내역</div>
+            <div class="items">
+              ${itemHtml || '<div class="item-row">주문 메뉴 정보 없음</div>'}
+            </div>
+
+            ${order.request_note ? `
+              <div class="request">
+                <strong>요청사항</strong>
+                <span class="request-text">${escapeHtml(order.request_note)}</span>
+              </div>
+            ` : ''}
+
+            <div class="order-total-row">
+              <span class="order-total-label">총 결제금액</span>
+              <span class="order-total-price">${Number(order.total_amount || 0).toLocaleString()}원</span>
+            </div>
+
+            <div class="order-bottom-actions">
+              <button type="button" class="print-ready-button" onclick="printOrderPlaceholder(${Number(order.id)})">
+                주문서 인쇄
+              </button>
+              ${getActionButton(order)}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
 
