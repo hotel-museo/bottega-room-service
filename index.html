@@ -3373,6 +3373,14 @@ main,
 
     renderCart();
 
+    renderSetMenus();
+    if (currentSetMenu && document.getElementById('set-config-overlay')?.classList.contains('show')) {
+      getSetLocalizedText(currentSetMenu).then(localizedSet => {
+        document.getElementById('set-config-name').textContent = localizedSet.name || currentSetMenu.name || '';
+        renderSetConfigGroups();
+      });
+    }
+
     handlePaymentChange();
 
     renderServiceStatus();
@@ -3718,6 +3726,60 @@ main,
     return [];
   }
 
+  const setTranslationCache = new Map();
+
+  async function translateSetText(text, targetLang) {
+    const source = String(text || '').trim();
+    if (!source || targetLang === 'ko') return source;
+
+    const langMap = { en: 'en', ja: 'ja', zh: 'zh-CN' };
+    const tl = langMap[targetLang] || 'en';
+    const key = `${tl}::${source}`;
+
+    if (setTranslationCache.has(key)) return setTranslationCache.get(key);
+
+    try {
+      const url =
+        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=' +
+        encodeURIComponent(tl) +
+        '&dt=t&q=' +
+        encodeURIComponent(source);
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('translation http ' + response.status);
+      const data = await response.json();
+      const translated = Array.isArray(data?.[0])
+        ? data[0].map(part => part?.[0] || '').join('')
+        : source;
+
+      setTranslationCache.set(key, translated || source);
+      return translated || source;
+    } catch (error) {
+      console.warn('SET TRANSLATION ERROR:', error);
+      return source;
+    }
+  }
+
+  async function getSetLocalizedText(set) {
+    if (currentLanguage === 'ko') {
+      return {
+        name: set.name || '',
+        description: set.description || ''
+      };
+    }
+
+    const suffix = currentLanguage === 'ja' ? 'ja' : currentLanguage === 'zh' ? 'zh' : 'en';
+    const storedName = set[`name_${suffix}`];
+    const storedDescription = set[`description_${suffix}`];
+
+    const [name, description] = await Promise.all([
+      storedName ? Promise.resolve(storedName) : translateSetText(set.name || '', currentLanguage),
+      storedDescription ? Promise.resolve(storedDescription) : translateSetText(set.description || '', currentLanguage)
+    ]);
+
+    return { name, description };
+  }
+
   async function loadSetMenus() {
     const list = document.getElementById('set-menu-list');
     if (!list) return;
@@ -3750,27 +3812,52 @@ main,
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function renderSetMenus() {
+  async function renderSetMenus() {
     const list = document.getElementById('set-menu-list');
     if (!list) return;
+
     if (!allSetMenus.length) {
-      list.innerHTML = '<div class="loading">현재 판매중인 세트메뉴가 없습니다.</div>';
+      list.innerHTML = `<div class="loading">${
+        currentLanguage === 'ko' ? '현재 판매중인 세트메뉴가 없습니다.' :
+        currentLanguage === 'ja' ? '現在販売中のセットメニューはありません。' :
+        currentLanguage === 'zh' ? '目前没有正在销售的套餐。' :
+        'There are no set menus available.'
+      }</div>`;
       return;
     }
-    list.innerHTML = allSetMenus.map(set => {
+
+    const localized = await Promise.all(
+      allSetMenus.map(async set => ({ set, text: await getSetLocalizedText(set) }))
+    );
+
+    list.innerHTML = localized.map(({set, text}) => {
       const config = normalizeSetConfiguration(set.config);
-      const tags = config.map(c => `<span class="set-customer-tag">${escapeHtml(getCategoryLabel(c.category || ''))} · ${Number(c.count || c.quantity || 1)}개 선택</span>`).join('');
+      const tags = config.map(c =>
+        `<span class="set-customer-tag">${escapeHtml(getCategoryLabel(c.category || ''))} · ${Number(c.count || c.quantity || 1)}${
+          currentLanguage === 'ko' ? '개 선택' :
+          currentLanguage === 'ja' ? '個選択' :
+          currentLanguage === 'zh' ? '个可选' :
+          ' selected'
+        }</span>`
+      ).join('');
+
+      const buttonText =
+        currentLanguage === 'ko' ? '세트 구성 선택' :
+        currentLanguage === 'ja' ? 'セット内容を選択' :
+        currentLanguage === 'zh' ? '选择套餐内容' :
+        'Choose set items';
+
       return `<article class="set-customer-card">
-        <h3>${escapeHtml(set.name || '')}</h3>
-        ${set.description ? `<div class="set-customer-desc">${escapeHtml(set.description)}</div>` : ''}
+        <h3>${escapeHtml(text.name || set.name || '')}</h3>
+        ${text.description ? `<div class="set-customer-desc">${escapeHtml(text.description)}</div>` : ''}
         <div class="set-customer-tags">${tags}</div>
         <div class="set-customer-price">${formatWon(Number(set.price || 0))}</div>
-        <button type="button" class="add-button" style="width:100%" onclick="openSetConfig(${Number(set.id)})" ${!isOrderingAllowed() ? 'disabled' : ''}>세트 구성 선택</button>
+        <button type="button" class="add-button" style="width:100%" onclick="openSetConfig(${Number(set.id)})" ${!isOrderingAllowed() ? 'disabled' : ''}>${buttonText}</button>
       </article>`;
     }).join('');
   }
 
-  function openSetConfig(setId) {
+  async function openSetConfig(setId) {
     if (!isOrderingAllowed()) return;
     const set = allSetMenus.find(s => Number(s.id) === Number(setId));
     if (!set) return;
@@ -3783,7 +3870,8 @@ main,
       selected_ids: []
     }));
 
-    document.getElementById('set-config-name').textContent = set.name || '';
+    const localizedSet = await getSetLocalizedText(set);
+    document.getElementById('set-config-name').textContent = localizedSet.name || set.name || '';
     document.getElementById('set-config-price').textContent = formatWon(Number(set.price || 0));
     renderSetConfigGroups();
     document.getElementById('set-config-overlay').classList.add('show');
@@ -3807,7 +3895,7 @@ main,
       const cards = candidates.map(menu => {
         const soldOut = isMenuSoldOut(menu);
         const selected = group.selected_ids.includes(Number(menu.id));
-        const displayName = getMenuDisplayName ? getMenuDisplayName(menu) : (menu.name || '');
+        const displayName = getMenuName(menu);
         const image = menu.image_url
           ? `<img src="${escapeHtml(menu.image_url)}" alt="">`
           : `<div class="set-choice-noimg">이미지 없음</div>`;
@@ -3823,7 +3911,12 @@ main,
 
       return `<section class="set-choice-group">
         <div class="set-choice-title">${escapeHtml(getCategoryLabel(group.category))}</div>
-        <div class="set-choice-help">${Number(group.quantity)}개를 선택해주세요. (${group.selected_ids.length}/${Number(group.quantity)})</div>
+        <div class="set-choice-help">${
+          currentLanguage === 'ko' ? `${Number(group.quantity)}개를 선택해주세요.` :
+          currentLanguage === 'ja' ? `${Number(group.quantity)}個選択してください。` :
+          currentLanguage === 'zh' ? `请选择${Number(group.quantity)}个。` :
+          `Choose ${Number(group.quantity)}.`
+        } (${group.selected_ids.length}/${Number(group.quantity)})</div>
         <div class="set-choice-grid">${cards || '<div class="loading">선택 가능한 메뉴가 없습니다.</div>'}</div>
       </section>`;
     }).join('');
@@ -3833,8 +3926,14 @@ main,
     const addButton = document.getElementById('set-config-add');
     addButton.disabled = false;
     addButton.textContent = ready
-      ? '선택 완료 · 장바구니 담기'
-      : '메뉴 선택 후 장바구니 담기';
+      ? (currentLanguage === 'ko' ? '선택 완료 · 장바구니 담기' :
+         currentLanguage === 'ja' ? '選択完了 · カートに追加' :
+         currentLanguage === 'zh' ? '选择完成 · 加入购物车' :
+         'Done · Add to cart')
+      : (currentLanguage === 'ko' ? '메뉴 선택 후 장바구니 담기' :
+         currentLanguage === 'ja' ? 'メニューを選択してください' :
+         currentLanguage === 'zh' ? '请选择菜单' :
+         'Choose menu items');
   }
 
   function toggleSetChoice(groupIndex, menuId) {
@@ -3855,7 +3954,7 @@ main,
     renderSetConfigGroups();
   }
 
-  function addConfiguredSetToCart() {
+  async function addConfiguredSetToCart() {
     if (!currentSetMenu) {
       alert('세트메뉴 정보를 다시 불러와주세요.');
       return;
@@ -3885,16 +3984,27 @@ main,
       })
     }));
 
-    const componentText = components.flatMap(g => g.items.map(i => i.name)).join(', ');
+    const componentText = components.flatMap(g => g.items.map(i => {
+      if (currentLanguage === 'en') return i.name_en || i.name;
+      if (currentLanguage === 'ja') return i.name_ja || i.name;
+      if (currentLanguage === 'zh') return i.name_zh || i.name;
+      return i.name;
+    })).join(', ');
     setCartSequence += 1;
+    const [setNameEn, setNameJa, setNameZh] = await Promise.all([
+      currentSetMenu.name_en || translateSetText(currentSetMenu.name || '', 'en'),
+      currentSetMenu.name_ja || translateSetText(currentSetMenu.name || '', 'ja'),
+      currentSetMenu.name_zh || translateSetText(currentSetMenu.name || '', 'zh')
+    ]);
+
     cart.push({
       id: -(Date.now() + setCartSequence),
       set_menu_id: Number(currentSetMenu.id),
       is_set: true,
       name: currentSetMenu.name || '',
-      name_en: currentSetMenu.name || '',
-      name_ja: currentSetMenu.name || '',
-      name_zh: currentSetMenu.name || '',
+      name_en: setNameEn || currentSetMenu.name || '',
+      name_ja: setNameJa || currentSetMenu.name || '',
+      name_zh: setNameZh || currentSetMenu.name || '',
       price: Number(currentSetMenu.price || 0),
       quantity: 1,
       set_components: components,
