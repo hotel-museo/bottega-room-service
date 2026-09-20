@@ -734,6 +734,39 @@ header p {
   }
 }
 
+
+
+/* =========================
+   세트메뉴 관리
+========================= */
+.set-admin-grid { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; }
+.set-admin-card { background:#fff; border:1px solid #e5e5e5; border-radius:12px; padding:17px; }
+.set-admin-card h3 { margin:0 0 6px; font-size:16px; }
+.set-admin-card .sub { margin:0 0 14px; color:#888; font-size:11px; line-height:1.6; }
+.set-field { margin-bottom:12px; }
+.set-field label { display:block; margin-bottom:6px; font-size:11px; font-weight:800; color:#555; }
+.set-field input,.set-field textarea,.set-field select { width:100%; border:1px solid #ddd; border-radius:9px; padding:10px 11px; background:#fff; }
+.set-field textarea { resize:vertical; min-height:72px; }
+.set-list { display:flex; flex-direction:column; gap:8px; }
+.set-list-item { border:1px solid #e4e4e4; border-radius:10px; padding:12px; cursor:pointer; background:#fafafa; }
+.set-list-item.active { border-color:#111; background:#f0f0f0; }
+.set-list-title { display:flex; justify-content:space-between; gap:10px; font-weight:800; font-size:13px; }
+.set-list-meta { margin-top:5px; color:#888; font-size:10px; }
+.set-group { border:1px solid #e3e3e3; border-radius:12px; padding:13px; margin-top:11px; }
+.set-group-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.set-group-head strong { font-size:13px; }
+.set-menu-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; max-height:310px; overflow:auto; }
+.set-menu-choice { display:flex; align-items:center; gap:9px; border:1px solid #e5e5e5; border-radius:9px; padding:8px; background:#fff; cursor:pointer; }
+.set-menu-choice img { width:48px; height:48px; object-fit:cover; border-radius:7px; background:#eee; flex:none; }
+.set-menu-choice .noimg { width:48px; height:48px; border-radius:7px; background:#eee; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:9px; flex:none; }
+.set-menu-choice span { min-width:0; font-size:11px; font-weight:700; line-height:1.35; }
+.set-menu-choice input { flex:none; }
+.set-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.set-actions .btn { flex:1; min-width:120px; }
+.set-empty { padding:22px 12px; text-align:center; color:#888; font-size:12px; background:#fafafa; border-radius:10px; }
+@media(max-width:950px){ .set-admin-grid{grid-template-columns:1fr;} }
+@media(max-width:600px){ .set-menu-picker{grid-template-columns:1fr;} }
+
 </style>
 
 <style>
@@ -784,6 +817,11 @@ header p {
     <button id="sidebar-sort" class="sidebar-item active" onclick="showView('sort')">
       <span class="sidebar-dot"></span>
       메뉴관리
+    </button>
+
+    <button id="sidebar-set" class="sidebar-item" onclick="showView('set')">
+      <span class="sidebar-dot"></span>
+      세트메뉴 관리
     </button>
 
     <button type="button" class="sidebar-item" onclick="window.location.href='translation-admin.html'">
@@ -917,6 +955,59 @@ header p {
 
 </section>
 
+
+
+<section id="set-view" class="view">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>세트메뉴 관리</h2>
+        <p>세트명·가격·구성 메뉴를 설정합니다. 구성 메뉴 사진은 단품 메뉴 사진을 자동으로 사용합니다.</p>
+      </div>
+      <button class="btn btn-green" type="button" onclick="newSetMenu()">+ 새 세트</button>
+    </div>
+    <div class="help">
+      예: 호캉스 세트 → 파스타 1개 + 피자 1개 + 에이드 2개. 각 구성에서 고객에게 보여줄 단품 메뉴만 체크하세요.
+    </div>
+
+    <div class="set-admin-grid">
+      <div class="set-admin-card">
+        <h3>등록된 세트</h3>
+        <p class="sub">세트를 선택하면 오른쪽에서 수정할 수 있습니다.</p>
+        <div id="set-menu-list" class="set-list"><div class="set-empty">세트 데이터를 불러오는 중입니다.</div></div>
+      </div>
+
+      <div class="set-admin-card">
+        <h3 id="set-editor-title">새 세트 만들기</h3>
+        <p class="sub">사진은 별도 등록하지 않습니다. 주문페이지에서 선택 가능한 단품 메뉴의 기존 사진을 자동으로 보여줍니다.</p>
+
+        <div class="set-field"><label>세트명</label><input id="set-name" placeholder="예: 호캉스 세트"></div>
+        <div class="set-field"><label>세트 설명</label><textarea id="set-description" placeholder="예: 객실에서 편하게 즐기는 BOTTEGA 추천 구성"></textarea></div>
+        <div class="set-field"><label>세트 가격</label><input id="set-price" type="number" min="0" step="100" placeholder="49000"></div>
+        <div class="set-field"><label>판매 상태</label><select id="set-active"><option value="true">판매중</option><option value="false">숨김</option></select></div>
+
+        <div class="set-group">
+          <div class="set-group-head"><strong>1. 파스타</strong><span>고객 선택 수 <select id="set-pasta-count"><option value="1">1개</option><option value="2">2개</option></select></span></div>
+          <div id="set-pasta-picker" class="set-menu-picker"></div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-head"><strong>2. 피자</strong><span>고객 선택 수 <select id="set-pizza-count"><option value="1">1개</option><option value="2">2개</option></select></span></div>
+          <div id="set-pizza-picker" class="set-menu-picker"></div>
+        </div>
+        <div class="set-group">
+          <div class="set-group-head"><strong>3. 에이드 / 음료</strong><span>고객 선택 수 <select id="set-drink-count"><option value="1">1개</option><option value="2" selected>2개</option><option value="3">3개</option></select></span></div>
+          <div id="set-drink-picker" class="set-menu-picker"></div>
+        </div>
+
+        <div class="set-actions">
+          <button class="btn btn-black" type="button" onclick="saveSetMenu()">세트 저장</button>
+          <button class="btn btn-gray" type="button" onclick="newSetMenu()">입력 초기화</button>
+          <button class="btn btn-red" id="set-delete-btn" type="button" onclick="deleteSetMenu()" style="display:none;">세트 삭제</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section id="design-view" class="view">
 
@@ -1539,11 +1630,9 @@ function getInitialAdminView() {
       window.location.search
     );
 
-  return (
-    params.get('view') === 'design'
-      ? 'design'
-      : 'sort'
-  );
+  const requested = params.get('view');
+
+  return requested === 'design' ? 'design' : requested === 'set' ? 'set' : 'sort';
 
 }
 
@@ -1583,96 +1672,44 @@ function updateAdminViewUrl(
 }
 
 function showView(viewName = 'sort') {
+  const sortView = document.getElementById('sort-view');
+  const setView = document.getElementById('set-view');
+  const designView = document.getElementById('design-view');
+  const sortButton = document.getElementById('sidebar-sort');
+  const setButton = document.getElementById('sidebar-set');
+  const designButton = document.getElementById('sidebar-design');
+  const title = document.getElementById('admin-page-title');
+  const subtitle = document.getElementById('admin-page-subtitle');
 
-  const sortView =
-    document.getElementById(
-      'sort-view'
-    );
+  const isDesign = viewName === 'design';
+  const isSet = viewName === 'set';
+  const isSort = !isDesign && !isSet;
 
-  const designView =
-    document.getElementById(
-      'design-view'
-    );
-
-  const sortButton =
-    document.getElementById(
-      'sidebar-sort'
-    );
-
-  const designButton =
-    document.getElementById(
-      'sidebar-design'
-    );
-
-  const title =
-    document.getElementById(
-      'admin-page-title'
-    );
-
-  const subtitle =
-    document.getElementById(
-      'admin-page-subtitle'
-    );
-
-  const isDesign =
-    viewName === 'design';
-
-  sortView.classList.toggle(
-    'active',
-    !isDesign
-  );
-
-  designView.classList.toggle(
-    'active',
-    isDesign
-  );
-
-  sortButton.classList.toggle(
-    'active',
-    !isDesign
-  );
-
-  designButton.classList.toggle(
-    'active',
-    isDesign
-  );
+  sortView.classList.toggle('active', isSort);
+  setView.classList.toggle('active', isSet);
+  designView.classList.toggle('active', isDesign);
+  sortButton.classList.toggle('active', isSort);
+  setButton.classList.toggle('active', isSet);
+  designButton.classList.toggle('active', isDesign);
 
   if (isDesign) {
-
-    title.textContent =
-      '주문페이지 디자인';
-
-    subtitle.textContent =
-      'ROOM SERVICE · DESIGN SETTINGS';
-
-    loadThemeSettings()
-      .then(
-        () => {
-
-          setTimeout(
-            applyLiveThemePreview,
-            100
-          );
-
-        }
-      );
-
+    title.textContent = '주문페이지 디자인';
+    subtitle.textContent = 'ROOM SERVICE · DESIGN SETTINGS';
+    loadThemeSettings().then(() => setTimeout(applyLiveThemePreview, 100));
+  } else if (isSet) {
+    title.textContent = '세트메뉴 관리';
+    subtitle.textContent = 'ROOM SERVICE · SET MENU MANAGEMENT';
+    loadSetMenus();
   } else {
-
-    title.textContent =
-      '메뉴관리';
-
-    subtitle.textContent =
-      'ROOM SERVICE · MENU MANAGEMENT';
-
+    title.textContent = '메뉴관리';
+    subtitle.textContent = 'ROOM SERVICE · MENU MANAGEMENT';
   }
 
-  updateAdminViewUrl(
-    isDesign
-      ? 'design'
-      : 'sort'
-  );
-
+  const url = new URL(window.location.href);
+  if (isDesign) url.searchParams.set('view','design');
+  else if (isSet) url.searchParams.set('view','set');
+  else url.searchParams.delete('view');
+  window.history.replaceState(null,'',url.toString());
 }
 
 
@@ -6069,6 +6106,177 @@ async function resetThemeSettings() {
 /* =========================
    최초 실행
 ========================= */
+
+
+/* =========================
+   세트메뉴 관리
+========================= */
+let allSetMenus = [];
+let editingSetId = null;
+
+function setMenuAvailableForPicker(menu) {
+  return menu && menu.is_hidden !== true;
+}
+
+function getSetPickerMenus(kind) {
+  const menus = allMenus.filter(setMenuAvailableForPicker);
+  if (kind === 'pasta') return menus.filter(m => String(m.category || '').toUpperCase() === 'PASTA');
+  if (kind === 'pizza') return menus.filter(m => String(m.category || '').toUpperCase() === 'PIZZA');
+  return menus.filter(m => {
+    const category = String(m.category || '').toUpperCase();
+    const names = [m.name,m.name_en,m.name_ja,m.name_zh].filter(Boolean).join(' ').toLowerCase();
+    const beverage = ['음료','BEVERAGE','BEVERAGES','DRINK','DRINKS'].includes(category) || category.includes('BEVERAGE') || category.includes('DRINK');
+    return beverage && (names.includes('에이드') || names.includes('ade') || names.includes('エイド'));
+  });
+}
+
+function renderSetPicker(kind, selectedIds = []) {
+  const box = document.getElementById(`set-${kind}-picker`);
+  if (!box) return;
+  const menus = getSetPickerMenus(kind);
+  if (!menus.length) {
+    box.innerHTML = '<div class="set-empty">해당 단품 메뉴가 없습니다.</div>';
+    return;
+  }
+  box.innerHTML = menus.map(menu => `
+    <label class="set-menu-choice">
+      <input type="checkbox" value="${Number(menu.id)}" ${selectedIds.map(Number).includes(Number(menu.id)) ? 'checked' : ''}>
+      ${menu.image_url ? `<img src="${escapeHtml(menu.image_url)}" alt="">` : '<div class="noimg">NO IMAGE</div>'}
+      <span>${escapeHtml(menu.name || '')}</span>
+    </label>
+  `).join('');
+}
+
+function getCheckedSetIds(kind) {
+  return [...document.querySelectorAll(`#set-${kind}-picker input[type="checkbox"]:checked`)].map(el => Number(el.value));
+}
+
+function newSetMenu() {
+  editingSetId = null;
+  document.getElementById('set-editor-title').textContent = '새 세트 만들기';
+  document.getElementById('set-name').value = '';
+  document.getElementById('set-description').value = '';
+  document.getElementById('set-price').value = '';
+  document.getElementById('set-active').value = 'true';
+  document.getElementById('set-pasta-count').value = '1';
+  document.getElementById('set-pizza-count').value = '1';
+  document.getElementById('set-drink-count').value = '2';
+  document.getElementById('set-delete-btn').style.display = 'none';
+  renderSetPicker('pasta', []);
+  renderSetPicker('pizza', []);
+  renderSetPicker('drink', []);
+  renderSetMenuList();
+}
+
+function renderSetMenuList() {
+  const box = document.getElementById('set-menu-list');
+  if (!box) return;
+  if (!allSetMenus.length) {
+    box.innerHTML = '<div class="set-empty">등록된 세트가 없습니다.<br>오른쪽에서 첫 세트를 만들어주세요.</div>';
+    return;
+  }
+  box.innerHTML = allSetMenus.map(set => `
+    <div class="set-list-item ${Number(editingSetId) === Number(set.id) ? 'active' : ''}" onclick="editSetMenu(${Number(set.id)})">
+      <div class="set-list-title"><span>${escapeHtml(set.name || '')}</span><span>${Number(set.price || 0).toLocaleString()}원</span></div>
+      <div class="set-list-meta">${set.is_active === false ? '숨김' : '판매중'} · ${escapeHtml(set.description || '')}</div>
+    </div>
+  `).join('');
+}
+
+async function loadSetMenus() {
+  const box = document.getElementById('set-menu-list');
+  if (box) box.innerHTML = '<div class="set-empty">세트 데이터를 불러오는 중입니다.</div>';
+  const { data, error } = await supabaseClient.from('set_menus').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true});
+  if (error) {
+    console.error('SET MENU LOAD ERROR:', error);
+    if (box) box.innerHTML = '<div class="set-empty">세트 테이블을 불러오지 못했습니다.<br>먼저 제공된 Supabase SQL을 실행해주세요.</div>';
+    return;
+  }
+  allSetMenus = data || [];
+  renderSetMenuList();
+  if (editingSetId) {
+    const exists = allSetMenus.some(x => Number(x.id) === Number(editingSetId));
+    if (!exists) newSetMenu();
+  } else {
+    renderSetPicker('pasta', []); renderSetPicker('pizza', []); renderSetPicker('drink', []);
+  }
+}
+
+function editSetMenu(id) {
+  const set = allSetMenus.find(x => Number(x.id) === Number(id));
+  if (!set) return;
+  editingSetId = Number(id);
+  const config = set.config && typeof set.config === 'object' ? set.config : {};
+  document.getElementById('set-editor-title').textContent = '세트 수정 · ' + (set.name || '');
+  document.getElementById('set-name').value = set.name || '';
+  document.getElementById('set-description').value = set.description || '';
+  document.getElementById('set-price').value = Number(set.price || 0);
+  document.getElementById('set-active').value = set.is_active === false ? 'false' : 'true';
+  document.getElementById('set-pasta-count').value = String(config.pasta?.count || 1);
+  document.getElementById('set-pizza-count').value = String(config.pizza?.count || 1);
+  document.getElementById('set-drink-count').value = String(config.drink?.count || 2);
+  renderSetPicker('pasta', config.pasta?.menu_ids || []);
+  renderSetPicker('pizza', config.pizza?.menu_ids || []);
+  renderSetPicker('drink', config.drink?.menu_ids || []);
+  document.getElementById('set-delete-btn').style.display = '';
+  renderSetMenuList();
+}
+
+async function saveSetMenu() {
+  const name = document.getElementById('set-name').value.trim();
+  const description = document.getElementById('set-description').value.trim();
+  const price = Number(document.getElementById('set-price').value);
+  const is_active = document.getElementById('set-active').value === 'true';
+  const pastaIds = getCheckedSetIds('pasta');
+  const pizzaIds = getCheckedSetIds('pizza');
+  const drinkIds = getCheckedSetIds('drink');
+  const pastaCount = Number(document.getElementById('set-pasta-count').value || 1);
+  const pizzaCount = Number(document.getElementById('set-pizza-count').value || 1);
+  const drinkCount = Number(document.getElementById('set-drink-count').value || 2);
+
+  if (!name) { alert('세트명을 입력해주세요.'); return; }
+  if (!Number.isFinite(price) || price < 0) { alert('세트 가격을 확인해주세요.'); return; }
+  if (pastaIds.length < pastaCount) { alert('파스타 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
+  if (pizzaIds.length < pizzaCount) { alert('피자 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
+  if (drinkIds.length < drinkCount) { alert('에이드/음료 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
+
+  const config = {
+    version: 1,
+    pasta: { label:'파스타', count:pastaCount, menu_ids:pastaIds },
+    pizza: { label:'피자', count:pizzaCount, menu_ids:pizzaIds },
+    drink: { label:'에이드', count:drinkCount, menu_ids:drinkIds }
+  };
+  const maxSort = allSetMenus.reduce((m,x)=>Math.max(m,Number(x.sort_order||0)),0);
+  const payload = { name, description:description || null, price, is_active, config, updated_at:new Date().toISOString() };
+  if (!editingSetId) payload.sort_order = maxSort + 1;
+
+  showSaving('세트 저장 중...');
+  let result;
+  if (editingSetId) result = await supabaseClient.from('set_menus').update(payload).eq('id',editingSetId).select().single();
+  else result = await supabaseClient.from('set_menus').insert(payload).select().single();
+  if (result.error) {
+    console.error('SET MENU SAVE ERROR:', result.error); hideSaving();
+    alert('세트 저장에 실패했습니다.\n' + (result.error.message || ''));
+    return;
+  }
+  editingSetId = Number(result.data.id);
+  await loadSetMenus();
+  editSetMenu(editingSetId);
+  showSaving('세트 저장 완료'); setTimeout(hideSaving,800);
+}
+
+async function deleteSetMenu() {
+  if (!editingSetId) return;
+  const set = allSetMenus.find(x => Number(x.id) === Number(editingSetId));
+  if (!confirm(`“${set?.name || '세트'}”을 삭제하시겠습니까?`)) return;
+  showSaving('세트 삭제 중...');
+  const { error } = await supabaseClient.from('set_menus').delete().eq('id',editingSetId);
+  if (error) { console.error(error); hideSaving(); alert('세트 삭제에 실패했습니다.'); return; }
+  editingSetId = null;
+  await loadSetMenus();
+  newSetMenu();
+  showSaving('세트 삭제 완료'); setTimeout(hideSaving,800);
+}
 
 async function initializeAdminPage() {
 
