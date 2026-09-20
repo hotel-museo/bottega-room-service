@@ -3736,7 +3736,10 @@ main,
       return;
     }
 
-    allSetMenus = data || [];
+    allSetMenus = (data || []).filter(set =>
+      set.is_active !== false &&
+      set.is_hidden !== true
+    );
     renderSetMenus();
   }
 
@@ -3801,7 +3804,7 @@ main,
     root.innerHTML = currentSetSelections.map((group, groupIndex) => {
       const candidates = group.menu_ids
         .map(id => allMenus.find(m => Number(m.id) === Number(id)))
-        .filter(Boolean);
+        .filter(menu => menu && menu.is_hidden !== true);
 
       const cards = candidates.map(menu => {
         const soldOut = isMenuSoldOut(menu);
