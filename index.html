@@ -3757,8 +3757,8 @@ main,
       return;
     }
     list.innerHTML = allSetMenus.map(set => {
-      const config = normalizeSetConfiguration(set.configuration);
-      const tags = config.map(c => `<span class="set-customer-tag">${escapeHtml(getCategoryLabel(c.category || ''))} · ${Number(c.quantity || 1)}개 선택</span>`).join('');
+      const config = normalizeSetConfiguration(set.config);
+      const tags = config.map(c => `<span class="set-customer-tag">${escapeHtml(getCategoryLabel(c.category || ''))} · ${Number(c.count || c.quantity || 1)}개 선택</span>`).join('');
       return `<article class="set-customer-card">
         <h3>${escapeHtml(set.name || '')}</h3>
         ${set.description ? `<div class="set-customer-desc">${escapeHtml(set.description)}</div>` : ''}
@@ -3775,9 +3775,9 @@ main,
     if (!set) return;
 
     currentSetMenu = set;
-    currentSetSelections = normalizeSetConfiguration(set.configuration).map(c => ({
+    currentSetSelections = normalizeSetConfiguration(set.config).map(c => ({
       category: c.category || '',
-      quantity: Math.max(1, Number(c.quantity || 1)),
+      quantity: Math.max(1, Number(c.count || c.quantity || 1)),
       menu_ids: Array.isArray(c.menu_ids) ? c.menu_ids.map(Number) : [],
       selected_ids: []
     }));
