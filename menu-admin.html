@@ -767,6 +767,8 @@ header p {
 @media(max-width:950px){ .set-admin-grid{grid-template-columns:1fr;} }
 @media(max-width:600px){ .set-menu-picker{grid-template-columns:1fr;} }
 
+
+.set-component-row{border:1px solid #e3e3e3;border-radius:12px;padding:13px;margin-top:11px;background:#fcfcfc}.set-component-head{display:grid;grid-template-columns:minmax(150px,1fr) 120px 42px;gap:8px;align-items:center;margin-bottom:10px}.set-component-head select{width:100%;border:1px solid #ddd;border-radius:9px;padding:9px;background:#fff}.set-remove-component{height:38px;border:0;border-radius:8px;background:#fff0f0;color:#d33;cursor:pointer}.set-add-component{margin-top:12px;border:1px solid #bbb;background:#fff;border-radius:9px;padding:10px 13px;font-weight:800;cursor:pointer}.set-component-note{font-size:10px;color:#888;margin-top:7px}@media(max-width:600px){.set-component-head{grid-template-columns:1fr 100px 40px}}
 </style>
 
 <style>
@@ -986,18 +988,9 @@ header p {
         <div class="set-field"><label>세트 가격</label><input id="set-price" type="number" min="0" step="100" placeholder="49000"></div>
         <div class="set-field"><label>판매 상태</label><select id="set-active"><option value="true">판매중</option><option value="false">숨김</option></select></div>
 
-        <div class="set-group">
-          <div class="set-group-head"><strong>1. 파스타</strong><span>고객 선택 수 <select id="set-pasta-count"><option value="1">1개</option><option value="2">2개</option></select></span></div>
-          <div id="set-pasta-picker" class="set-menu-picker"></div>
-        </div>
-        <div class="set-group">
-          <div class="set-group-head"><strong>2. 피자</strong><span>고객 선택 수 <select id="set-pizza-count"><option value="1">1개</option><option value="2">2개</option></select></span></div>
-          <div id="set-pizza-picker" class="set-menu-picker"></div>
-        </div>
-        <div class="set-group">
-          <div class="set-group-head"><strong>3. 에이드 / 음료</strong><span>고객 선택 수 <select id="set-drink-count"><option value="1">1개</option><option value="2" selected>2개</option><option value="3">3개</option></select></span></div>
-          <div id="set-drink-picker" class="set-menu-picker"></div>
-        </div>
+        <div class="set-field"><label>세트 구성 카테고리</label><div style="font-size:11px;color:#888;line-height:1.6;">카테고리를 자유롭게 추가하고 고객 선택 수량과 포함 메뉴를 지정하세요. 같은 카테고리도 여러 번 추가할 수 있습니다.</div></div>
+        <div id="set-components"></div>
+        <button class="set-add-component" type="button" onclick="addSetComponent()">+ 카테고리 추가 (중복 가능)</button>
 
         <div class="set-actions">
           <button class="btn btn-black" type="button" onclick="saveSetMenu()">세트 저장</button>
@@ -6113,169 +6106,82 @@ async function resetThemeSettings() {
 ========================= */
 let allSetMenus = [];
 let editingSetId = null;
+let setComponentDraft = [];
 
-function setMenuAvailableForPicker(menu) {
-  return menu && menu.is_hidden !== true;
+function setMenuAvailableForPicker(menu){ return menu && menu.is_hidden !== true; }
+function getSetCategories(){ return [...new Set(allMenus.filter(setMenuAvailableForPicker).map(m=>String(m.category||'').trim()).filter(Boolean))]; }
+function normalizeSetComponents(config){
+  if (!config || typeof config !== 'object') return [];
+  if (Array.isArray(config.components)) return config.components.map(c=>({category:String(c.category||''),count:Math.max(1,Number(c.count||c.quantity||1)),menu_ids:Array.isArray(c.menu_ids)?c.menu_ids.map(Number):[]}));
+  const legacy=[];
+  if(config.pasta) legacy.push({category:'PASTA',count:Number(config.pasta.count||1),menu_ids:(config.pasta.menu_ids||[]).map(Number)});
+  if(config.pizza) legacy.push({category:'PIZZA',count:Number(config.pizza.count||1),menu_ids:(config.pizza.menu_ids||[]).map(Number)});
+  if(config.drink) legacy.push({category:'DRINK',count:Number(config.drink.count||2),menu_ids:(config.drink.menu_ids||[]).map(Number)});
+  return legacy;
 }
-
-function getSetPickerMenus(kind) {
-  const menus = allMenus.filter(setMenuAvailableForPicker);
-  if (kind === 'pasta') return menus.filter(m => String(m.category || '').toUpperCase() === 'PASTA');
-  if (kind === 'pizza') return menus.filter(m => String(m.category || '').toUpperCase() === 'PIZZA');
-  return menus.filter(m => {
-    const category = String(m.category || '').toUpperCase();
-    const names = [m.name,m.name_en,m.name_ja,m.name_zh].filter(Boolean).join(' ').toLowerCase();
-    const beverage = ['음료','BEVERAGE','BEVERAGES','DRINK','DRINKS'].includes(category) || category.includes('BEVERAGE') || category.includes('DRINK');
-    return beverage && (names.includes('에이드') || names.includes('ade') || names.includes('エイド'));
-  });
+function addSetComponent(category=''){
+  const cats=getSetCategories();
+  setComponentDraft.push({category:category||cats[0]||'',count:1,menu_ids:[]});
+  renderSetComponents();
 }
-
-function renderSetPicker(kind, selectedIds = []) {
-  const box = document.getElementById(`set-${kind}-picker`);
-  if (!box) return;
-  const menus = getSetPickerMenus(kind);
-  if (!menus.length) {
-    box.innerHTML = '<div class="set-empty">해당 단품 메뉴가 없습니다.</div>';
-    return;
-  }
-  box.innerHTML = menus.map(menu => `
-    <label class="set-menu-choice">
-      <input type="checkbox" value="${Number(menu.id)}" ${selectedIds.map(Number).includes(Number(menu.id)) ? 'checked' : ''}>
-      ${menu.image_url ? `<img src="${escapeHtml(menu.image_url)}" alt="">` : '<div class="noimg">NO IMAGE</div>'}
-      <span>${escapeHtml(menu.name || '')}</span>
-    </label>
-  `).join('');
+function removeSetComponent(i){ setComponentDraft.splice(i,1); renderSetComponents(); }
+function changeSetComponentCategory(i,value){ setComponentDraft[i].category=value; setComponentDraft[i].menu_ids=[]; renderSetComponents(); }
+function changeSetComponentCount(i,value){ setComponentDraft[i].count=Math.max(1,Number(value||1)); }
+function toggleSetComponentMenu(i,id,checked){
+  const c=setComponentDraft[i], n=Number(id);
+  if(checked){ if(!c.menu_ids.includes(n)) c.menu_ids.push(n); }
+  else c.menu_ids=c.menu_ids.filter(x=>Number(x)!==n);
 }
-
-function getCheckedSetIds(kind) {
-  return [...document.querySelectorAll(`#set-${kind}-picker input[type="checkbox"]:checked`)].map(el => Number(el.value));
+function renderSetComponents(){
+  const box=document.getElementById('set-components'); if(!box) return;
+  const cats=getSetCategories();
+  if(!setComponentDraft.length){ box.innerHTML='<div class="set-empty">아래 버튼을 눌러 세트에 들어갈 카테고리를 추가해주세요.</div>'; return; }
+  box.innerHTML=setComponentDraft.map((c,i)=>{
+    const options=cats.map(cat=>`<option value="${escapeHtml(cat)}" ${cat===c.category?'selected':''}>${escapeHtml(cat)}</option>`).join('');
+    const menus=allMenus.filter(m=>setMenuAvailableForPicker(m)&&String(m.category||'')===String(c.category||''));
+    const picker=menus.length?menus.map(m=>`<label class="set-menu-choice"><input type="checkbox" value="${Number(m.id)}" ${c.menu_ids.includes(Number(m.id))?'checked':''} onchange="toggleSetComponentMenu(${i},${Number(m.id)},this.checked)">${m.image_url?`<img src="${escapeHtml(m.image_url)}" alt="">`:'<div class="noimg">NO IMAGE</div>'}<span>${escapeHtml(m.name||'')}</span></label>`).join(''):'<div class="set-empty">이 카테고리에 등록된 메뉴가 없습니다.</div>';
+    return `<div class="set-component-row"><div class="set-component-head"><select onchange="changeSetComponentCategory(${i},this.value)">${options}</select><select onchange="changeSetComponentCount(${i},this.value)">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option value="${n}" ${n===Number(c.count)?'selected':''}>${n}개 선택</option>`).join('')}</select><button class="set-remove-component" type="button" onclick="removeSetComponent(${i})">✕</button></div><div class="set-menu-picker">${picker}</div><div class="set-component-note">※ 같은 카테고리를 아래에서 다시 추가해도 됩니다.</div></div>`;
+  }).join('');
 }
-
-function newSetMenu() {
-  editingSetId = null;
-  document.getElementById('set-editor-title').textContent = '새 세트 만들기';
-  document.getElementById('set-name').value = '';
-  document.getElementById('set-description').value = '';
-  document.getElementById('set-price').value = '';
-  document.getElementById('set-active').value = 'true';
-  document.getElementById('set-pasta-count').value = '1';
-  document.getElementById('set-pizza-count').value = '1';
-  document.getElementById('set-drink-count').value = '2';
-  document.getElementById('set-delete-btn').style.display = 'none';
-  renderSetPicker('pasta', []);
-  renderSetPicker('pizza', []);
-  renderSetPicker('drink', []);
-  renderSetMenuList();
+function newSetMenu(){
+  editingSetId=null;
+  document.getElementById('set-editor-title').textContent='새 세트 만들기';
+  document.getElementById('set-name').value=''; document.getElementById('set-description').value=''; document.getElementById('set-price').value=''; document.getElementById('set-active').value='true';
+  document.getElementById('set-delete-btn').style.display='none';
+  setComponentDraft=[]; addSetComponent(); renderSetMenuList();
 }
-
-function renderSetMenuList() {
-  const box = document.getElementById('set-menu-list');
-  if (!box) return;
-  if (!allSetMenus.length) {
-    box.innerHTML = '<div class="set-empty">등록된 세트가 없습니다.<br>오른쪽에서 첫 세트를 만들어주세요.</div>';
-    return;
-  }
-  box.innerHTML = allSetMenus.map(set => `
-    <div class="set-list-item ${Number(editingSetId) === Number(set.id) ? 'active' : ''}" onclick="editSetMenu(${Number(set.id)})">
-      <div class="set-list-title"><span>${escapeHtml(set.name || '')}</span><span>${Number(set.price || 0).toLocaleString()}원</span></div>
-      <div class="set-list-meta">${set.is_active === false ? '숨김' : '판매중'} · ${escapeHtml(set.description || '')}</div>
-    </div>
-  `).join('');
+function renderSetMenuList(){
+  const box=document.getElementById('set-menu-list'); if(!box)return;
+  if(!allSetMenus.length){box.innerHTML='<div class="set-empty">등록된 세트가 없습니다.<br>오른쪽에서 첫 세트를 만들어주세요.</div>';return;}
+  box.innerHTML=allSetMenus.map(set=>{const comps=normalizeSetComponents(set.config); const tags=comps.map(c=>`${escapeHtml(c.category)} ${Number(c.count)}개`).join(' + '); return `<div class="set-list-item ${Number(editingSetId)===Number(set.id)?'active':''}" onclick="editSetMenu(${Number(set.id)})"><div class="set-list-title"><span>${escapeHtml(set.name||'')}</span><span>${Number(set.price||0).toLocaleString()}원</span></div><div class="set-list-meta">${set.is_active===false?'숨김':'판매중'} · ${tags||'구성 없음'}</div></div>`}).join('');
 }
-
-async function loadSetMenus() {
-  const box = document.getElementById('set-menu-list');
-  if (box) box.innerHTML = '<div class="set-empty">세트 데이터를 불러오는 중입니다.</div>';
-  const { data, error } = await supabaseClient.from('set_menus').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true});
-  if (error) {
-    console.error('SET MENU LOAD ERROR:', error);
-    if (box) box.innerHTML = '<div class="set-empty">세트 테이블을 불러오지 못했습니다.<br>먼저 제공된 Supabase SQL을 실행해주세요.</div>';
-    return;
-  }
-  allSetMenus = data || [];
-  renderSetMenuList();
-  if (editingSetId) {
-    const exists = allSetMenus.some(x => Number(x.id) === Number(editingSetId));
-    if (!exists) newSetMenu();
-  } else {
-    renderSetPicker('pasta', []); renderSetPicker('pizza', []); renderSetPicker('drink', []);
-  }
+async function loadSetMenus(){
+  const box=document.getElementById('set-menu-list'); if(box)box.innerHTML='<div class="set-empty">세트 데이터를 불러오는 중입니다.</div>';
+  const {data,error}=await supabaseClient.from('set_menus').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true});
+  if(error){console.error('SET MENU LOAD ERROR:',error);if(box)box.innerHTML='<div class="set-empty">세트 테이블을 불러오지 못했습니다.<br>Supabase SQL 설정을 확인해주세요.</div>';return;}
+  allSetMenus=data||[]; renderSetMenuList(); if(!editingSetId) renderSetComponents();
 }
-
-function editSetMenu(id) {
-  const set = allSetMenus.find(x => Number(x.id) === Number(id));
-  if (!set) return;
-  editingSetId = Number(id);
-  const config = set.config && typeof set.config === 'object' ? set.config : {};
-  document.getElementById('set-editor-title').textContent = '세트 수정 · ' + (set.name || '');
-  document.getElementById('set-name').value = set.name || '';
-  document.getElementById('set-description').value = set.description || '';
-  document.getElementById('set-price').value = Number(set.price || 0);
-  document.getElementById('set-active').value = set.is_active === false ? 'false' : 'true';
-  document.getElementById('set-pasta-count').value = String(config.pasta?.count || 1);
-  document.getElementById('set-pizza-count').value = String(config.pizza?.count || 1);
-  document.getElementById('set-drink-count').value = String(config.drink?.count || 2);
-  renderSetPicker('pasta', config.pasta?.menu_ids || []);
-  renderSetPicker('pizza', config.pizza?.menu_ids || []);
-  renderSetPicker('drink', config.drink?.menu_ids || []);
-  document.getElementById('set-delete-btn').style.display = '';
-  renderSetMenuList();
+function editSetMenu(id){
+  const set=allSetMenus.find(x=>Number(x.id)===Number(id)); if(!set)return;
+  editingSetId=Number(id); document.getElementById('set-editor-title').textContent='세트 수정 · '+(set.name||'');
+  document.getElementById('set-name').value=set.name||''; document.getElementById('set-description').value=set.description||''; document.getElementById('set-price').value=Number(set.price||0); document.getElementById('set-active').value=set.is_active===false?'false':'true';
+  setComponentDraft=normalizeSetComponents(set.config); if(!setComponentDraft.length)addSetComponent(); else renderSetComponents();
+  document.getElementById('set-delete-btn').style.display=''; renderSetMenuList();
 }
-
-async function saveSetMenu() {
-  const name = document.getElementById('set-name').value.trim();
-  const description = document.getElementById('set-description').value.trim();
-  const price = Number(document.getElementById('set-price').value);
-  const is_active = document.getElementById('set-active').value === 'true';
-  const pastaIds = getCheckedSetIds('pasta');
-  const pizzaIds = getCheckedSetIds('pizza');
-  const drinkIds = getCheckedSetIds('drink');
-  const pastaCount = Number(document.getElementById('set-pasta-count').value || 1);
-  const pizzaCount = Number(document.getElementById('set-pizza-count').value || 1);
-  const drinkCount = Number(document.getElementById('set-drink-count').value || 2);
-
-  if (!name) { alert('세트명을 입력해주세요.'); return; }
-  if (!Number.isFinite(price) || price < 0) { alert('세트 가격을 확인해주세요.'); return; }
-  if (pastaIds.length < pastaCount) { alert('파스타 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
-  if (pizzaIds.length < pizzaCount) { alert('피자 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
-  if (drinkIds.length < drinkCount) { alert('에이드/음료 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.'); return; }
-
-  const config = {
-    version: 1,
-    pasta: { label:'파스타', count:pastaCount, menu_ids:pastaIds },
-    pizza: { label:'피자', count:pizzaCount, menu_ids:pizzaIds },
-    drink: { label:'에이드', count:drinkCount, menu_ids:drinkIds }
-  };
-  const maxSort = allSetMenus.reduce((m,x)=>Math.max(m,Number(x.sort_order||0)),0);
-  const payload = { name, description:description || null, price, is_active, config, updated_at:new Date().toISOString() };
-  if (!editingSetId) payload.sort_order = maxSort + 1;
-
-  showSaving('세트 저장 중...');
-  let result;
-  if (editingSetId) result = await supabaseClient.from('set_menus').update(payload).eq('id',editingSetId).select().single();
-  else result = await supabaseClient.from('set_menus').insert(payload).select().single();
-  if (result.error) {
-    console.error('SET MENU SAVE ERROR:', result.error); hideSaving();
-    alert('세트 저장에 실패했습니다.\n' + (result.error.message || ''));
-    return;
-  }
-  editingSetId = Number(result.data.id);
-  await loadSetMenus();
-  editSetMenu(editingSetId);
-  showSaving('세트 저장 완료'); setTimeout(hideSaving,800);
+async function saveSetMenu(){
+  const name=document.getElementById('set-name').value.trim(), description=document.getElementById('set-description').value.trim(), price=Number(document.getElementById('set-price').value), is_active=document.getElementById('set-active').value==='true';
+  if(!name)return alert('세트명을 입력해주세요.'); if(!Number.isFinite(price)||price<0)return alert('세트 가격을 확인해주세요.'); if(!setComponentDraft.length)return alert('카테고리를 1개 이상 추가해주세요.');
+  for(let i=0;i<setComponentDraft.length;i++){const c=setComponentDraft[i]; if(!c.category)return alert(`${i+1}번째 카테고리를 선택해주세요.`); if(c.menu_ids.length<c.count)return alert(`${c.category} 구성의 선택 가능 메뉴를 고객 선택 수 이상 체크해주세요.`);}
+  const config={version:2,components:setComponentDraft.map(c=>({category:c.category,count:Number(c.count||1),menu_ids:c.menu_ids.map(Number)}))};
+  const maxSort=allSetMenus.reduce((m,x)=>Math.max(m,Number(x.sort_order||0)),0); const payload={name,description:description||null,price,is_active,config,updated_at:new Date().toISOString()}; if(!editingSetId)payload.sort_order=maxSort+1;
+  showSaving('세트 저장 중...'); let result;
+  if(editingSetId)result=await supabaseClient.from('set_menus').update(payload).eq('id',editingSetId).select().single(); else result=await supabaseClient.from('set_menus').insert(payload).select().single();
+  if(result.error){console.error('SET MENU SAVE ERROR:',result.error);hideSaving();alert('세트 저장에 실패했습니다.\n'+(result.error.message||''));return;}
+  editingSetId=Number(result.data.id); await loadSetMenus(); editSetMenu(editingSetId); showSaving('세트 저장 완료'); setTimeout(hideSaving,800);
 }
-
-async function deleteSetMenu() {
-  if (!editingSetId) return;
-  const set = allSetMenus.find(x => Number(x.id) === Number(editingSetId));
-  if (!confirm(`“${set?.name || '세트'}”을 삭제하시겠습니까?`)) return;
-  showSaving('세트 삭제 중...');
-  const { error } = await supabaseClient.from('set_menus').delete().eq('id',editingSetId);
-  if (error) { console.error(error); hideSaving(); alert('세트 삭제에 실패했습니다.'); return; }
-  editingSetId = null;
-  await loadSetMenus();
-  newSetMenu();
-  showSaving('세트 삭제 완료'); setTimeout(hideSaving,800);
+async function deleteSetMenu(){
+  if(!editingSetId)return; const set=allSetMenus.find(x=>Number(x.id)===Number(editingSetId)); if(!confirm(`“${set?.name||'세트'}”을 삭제하시겠습니까?`))return;
+  showSaving('세트 삭제 중...'); const {error}=await supabaseClient.from('set_menus').delete().eq('id',editingSetId); if(error){console.error(error);hideSaving();alert('세트 삭제에 실패했습니다.');return;} editingSetId=null; await loadSetMenus(); newSetMenu(); showSaving('세트 삭제 완료'); setTimeout(hideSaving,800);
 }
 
 async function initializeAdminPage() {
