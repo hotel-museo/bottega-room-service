@@ -1526,6 +1526,327 @@ main,
   background: var(--theme-card-bg-color) !important;
 }
 </style>
+
+<style id="set-menu-test-styles">
+  .order-mode-home {
+    padding: 18px 16px 120px;
+  }
+  .order-mode-intro {
+    text-align: center;
+    margin: 8px auto 22px;
+    max-width: 520px;
+  }
+  .order-mode-intro h2 {
+    margin: 0 0 8px;
+    font-family: "Cormorant Garamond", "Noto Serif KR", serif;
+    font-size: 29px;
+    letter-spacing: 1px;
+  }
+  .order-mode-intro p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    opacity: .65;
+  }
+  .order-mode-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .order-mode-card {
+    min-height: 210px;
+    border: 1px solid rgba(0,0,0,.10);
+    border-radius: 18px;
+    background: var(--theme-card-bg-color, #fff);
+    color: inherit;
+    padding: 25px 18px;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .order-mode-card:active { transform: scale(.99); }
+  .order-mode-card .mode-kicker {
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: .48;
+    font-weight: 700;
+  }
+  .order-mode-card .mode-title {
+    margin-top: 28px;
+    font-size: 23px;
+    font-weight: 800;
+  }
+  .order-mode-card .mode-desc {
+    margin-top: 7px;
+    font-size: 12px;
+    line-height: 1.6;
+    opacity: .62;
+  }
+  .order-mode-card .mode-arrow {
+    margin-top: 22px;
+    font-size: 22px;
+  }
+  .order-mode-card.set-card {
+    background: #111;
+    color: #fff;
+  }
+
+  .order-mode-switch {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 70;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0,0,0,.07);
+  }
+  .order-mode-switch.show { display: flex; }
+  .order-mode-switch-inner {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    padding: 4px;
+    border-radius: 13px;
+    background: #eee;
+  }
+  .order-mode-switch button {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 8px;
+    background: transparent;
+    color: #555;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .order-mode-switch button.active {
+    background: #111;
+    color: #fff;
+  }
+
+  #single-menu-page,
+  #set-menu-page { display: none; }
+  #single-menu-page.show,
+  #set-menu-page.show { display: block; }
+
+  .set-menu-page {
+    padding: 22px 16px 120px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .set-page-head {
+    margin-bottom: 18px;
+  }
+  .set-page-head .eyebrow {
+    font-size: 10px;
+    letter-spacing: 2px;
+    opacity: .48;
+    font-weight: 700;
+  }
+  .set-page-head h2 {
+    margin: 6px 0 7px;
+    font-size: 27px;
+  }
+  .set-page-head p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.65;
+    opacity: .62;
+  }
+  .set-product-card {
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--theme-card-bg-color, #fff);
+    border: 1px solid rgba(0,0,0,.08);
+    box-shadow: 0 8px 26px rgba(0,0,0,.06);
+  }
+  .set-product-visual {
+    min-height: 170px;
+    padding: 24px;
+    background: linear-gradient(135deg,#151515,#353535);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .set-product-visual .badge {
+    align-self: flex-start;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.14);
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .set-product-visual h3 {
+    margin: 0;
+    font-size: 25px;
+  }
+  .set-product-visual p {
+    margin: 7px 0 0;
+    font-size: 12px;
+    opacity: .72;
+  }
+  .set-product-body { padding: 18px; }
+  .set-composition {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 16px;
+  }
+  .set-composition span {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #f3f3f3;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .set-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .set-price {
+    font-size: 21px;
+    font-weight: 900;
+  }
+  .set-start-button {
+    border: 0;
+    border-radius: 11px;
+    padding: 12px 17px;
+    background: var(--theme-button-color, #111);
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .set-builder-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    background: rgba(0,0,0,.58);
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
+  }
+  .set-builder-overlay.show { display: flex; }
+  .set-builder {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    border-radius: 19px;
+    background: #fff;
+    color: #111;
+    box-shadow: 0 20px 70px rgba(0,0,0,.32);
+  }
+  .set-builder-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 17px 18px 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .set-builder-head h3 { margin: 0; font-size: 20px; }
+  .set-builder-head p { margin: 5px 0 0; color: #777; font-size: 11px; }
+  .set-builder-close {
+    border: 0;
+    background: #f1f1f1;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+  }
+  .set-builder-body { padding: 16px 18px 20px; }
+  .set-step {
+    margin-bottom: 22px;
+  }
+  .set-step-title {
+    font-size: 14px;
+    font-weight: 900;
+    margin-bottom: 9px;
+  }
+  .set-step-title small {
+    margin-left: 5px;
+    color: #999;
+    font-size: 10px;
+  }
+  .set-options {
+    display: grid;
+    gap: 8px;
+  }
+  .set-option {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    background: #fff;
+  }
+  .set-option.selected {
+    border-color: #111;
+    background: #f4f4f4;
+  }
+  .set-option.disabled {
+    opacity: .42;
+    cursor: not-allowed;
+  }
+  .set-option input { accent-color: #111; }
+  .set-option-name { flex: 1; font-size: 13px; font-weight: 700; }
+  .set-option-soldout { font-size: 10px; color: #999; }
+  .set-builder-empty {
+    padding: 13px;
+    border-radius: 10px;
+    background: #f7f7f7;
+    color: #777;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .set-builder-summary {
+    margin-top: 5px;
+    padding: 13px;
+    border-radius: 12px;
+    background: #f5f5f5;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .set-builder-add {
+    width: 100%;
+    margin-top: 12px;
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    background: #111;
+    color: #fff;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .set-builder-add:disabled { opacity: .35; cursor: not-allowed; }
+
+  @media(max-width: 600px) {
+    .order-mode-cards { grid-template-columns: 1fr; }
+    .order-mode-card { min-height: 160px; }
+    .order-mode-card .mode-title { margin-top: 18px; }
+  }
+</style>
+
 </head>
 
 <body>
@@ -1598,16 +1919,83 @@ main,
     id="menu-area"
   >
 
-    <div
-      class="category-nav"
-      id="category-nav"
-    ></div>
-
-    <main id="menu-list">
-      <div class="loading">
-        메뉴를 불러오는 중입니다.
+    <section class="order-mode-home" id="order-mode-home">
+      <div class="order-mode-intro">
+        <h2 id="order-mode-title">Choose Your Menu</h2>
+        <p id="order-mode-description">원하시는 주문 방식을 선택해주세요.</p>
       </div>
-    </main>
+
+      <div class="order-mode-cards">
+        <button type="button" class="order-mode-card set-card" onclick="selectOrderMode('set')">
+          <div>
+            <div class="mode-kicker">BOTTEGA SET</div>
+            <div class="mode-title" id="set-mode-title">세트 메뉴</div>
+            <div class="mode-desc" id="set-mode-description">추천 구성으로 간편하게 즐기는 BOTTEGA 세트</div>
+          </div>
+          <div class="mode-arrow">→</div>
+        </button>
+
+        <button type="button" class="order-mode-card" onclick="selectOrderMode('single')">
+          <div>
+            <div class="mode-kicker">À LA CARTE</div>
+            <div class="mode-title" id="single-mode-title">단품 메뉴</div>
+            <div class="mode-desc" id="single-mode-description">파스타, 피자, 음료 등 원하는 메뉴를 자유롭게 선택</div>
+          </div>
+          <div class="mode-arrow">→</div>
+        </button>
+      </div>
+    </section>
+
+    <div class="order-mode-switch" id="order-mode-switch">
+      <div class="order-mode-switch-inner">
+        <button type="button" id="set-mode-tab" onclick="selectOrderMode('set')">세트 메뉴</button>
+        <button type="button" id="single-mode-tab" onclick="selectOrderMode('single')">단품 메뉴</button>
+      </div>
+    </div>
+
+    <section id="set-menu-page" class="set-menu-page">
+      <div class="set-page-head">
+        <div class="eyebrow">BOTTEGA SET MENU</div>
+        <h2 id="set-page-title">세트 메뉴</h2>
+        <p id="set-page-description">메뉴를 하나씩 선택해 나만의 세트를 완성해주세요.</p>
+      </div>
+
+      <article class="set-product-card">
+        <div class="set-product-visual">
+          <div class="badge" id="set-recommend-badge">ROOM SERVICE SPECIAL</div>
+          <h3 id="staycation-set-name">호캉스 세트</h3>
+          <p id="staycation-set-sub">객실에서 편하게 즐기는 BOTTEGA 추천 구성</p>
+        </div>
+
+        <div class="set-product-body">
+          <div class="set-composition">
+            <span id="set-chip-pasta">파스타 택 1</span>
+            <span id="set-chip-pizza">피자 택 1</span>
+            <span id="set-chip-ade">에이드 택 2</span>
+          </div>
+
+          <div class="set-price-row">
+            <div class="set-price">49,000원</div>
+            <button type="button" class="set-start-button" id="set-start-button" onclick="openSetBuilder()">
+              구성 선택
+            </button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="single-menu-page">
+      <div
+        class="category-nav"
+        id="category-nav"
+      ></div>
+
+      <main id="menu-list">
+        <div class="loading">
+          메뉴를 불러오는 중입니다.
+        </div>
+      </main>
+    </section>
 
   </div>
 
@@ -1954,6 +2342,42 @@ main,
 
 </div>
 
+
+
+
+<div class="set-builder-overlay" id="set-builder-overlay" onclick="setBuilderBackgroundClose(event)">
+  <div class="set-builder">
+    <div class="set-builder-head">
+      <div>
+        <h3 id="set-builder-title">호캉스 세트 구성</h3>
+        <p id="set-builder-guide">파스타 1 · 피자 1 · 에이드 2를 선택해주세요.</p>
+      </div>
+      <button type="button" class="set-builder-close" onclick="closeSetBuilder()">×</button>
+    </div>
+
+    <div class="set-builder-body">
+      <div class="set-step">
+        <div class="set-step-title"><span id="set-step-pasta-title">1. 파스타 선택</span> <small>1개 필수</small></div>
+        <div class="set-options" id="set-pasta-options"></div>
+      </div>
+
+      <div class="set-step">
+        <div class="set-step-title"><span id="set-step-pizza-title">2. 피자 선택</span> <small>1개 필수</small></div>
+        <div class="set-options" id="set-pizza-options"></div>
+      </div>
+
+      <div class="set-step">
+        <div class="set-step-title"><span id="set-step-ade-title">3. 에이드 선택</span> <small>2개 필수 · 같은 음료 2개 가능</small></div>
+        <div class="set-options" id="set-ade-options"></div>
+      </div>
+
+      <div class="set-builder-summary" id="set-builder-summary"></div>
+      <button type="button" class="set-builder-add" id="set-builder-add" onclick="addSelectedSetToCart()" disabled>
+        세트 장바구니 담기 · 49,000원
+      </button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -3327,6 +3751,8 @@ main,
     handlePaymentChange();
 
     renderServiceStatus();
+
+    applySetMenuTranslations();
 
 
     if (
@@ -5330,6 +5756,419 @@ function changeCutleryQty(change) {
   }
 
 
+
+  /* =========================
+     SET / SINGLE MENU TEST FLOW
+     1차 테스트: 기존 DB 구조는 변경하지 않습니다.
+  ========================= */
+
+  let currentOrderMode = '';
+  let setSelection = {
+    pasta: null,
+    pizza: null,
+    ades: []
+  };
+
+  const setUiText = {
+    ko: {
+      chooseTitle: 'Choose Your Menu',
+      chooseDesc: '원하시는 주문 방식을 선택해주세요.',
+      setTitle: '세트 메뉴',
+      setDesc: '추천 구성으로 간편하게 즐기는 BOTTEGA 세트',
+      singleTitle: '단품 메뉴',
+      singleDesc: '파스타, 피자, 음료 등 원하는 메뉴를 자유롭게 선택',
+      setPageTitle: '세트 메뉴',
+      setPageDesc: '메뉴를 하나씩 선택해 나만의 세트를 완성해주세요.',
+      setName: '호캉스 세트',
+      setSub: '객실에서 편하게 즐기는 BOTTEGA 추천 구성',
+      pastaChip: '파스타 택 1',
+      pizzaChip: '피자 택 1',
+      adeChip: '에이드 택 2',
+      selectComposition: '구성 선택',
+      builderTitle: '호캉스 세트 구성',
+      builderGuide: '파스타 1 · 피자 1 · 에이드 2를 선택해주세요.',
+      pastaStep: '1. 파스타 선택',
+      pizzaStep: '2. 피자 선택',
+      adeStep: '3. 에이드 선택',
+      addSet: '세트 장바구니 담기 · 49,000원',
+      soldout: '품절',
+      noPasta: '선택 가능한 파스타가 없습니다.',
+      noPizza: '선택 가능한 피자가 없습니다.',
+      noAde: '메뉴명에 “에이드”가 포함된 음료가 없습니다.',
+      summaryEmpty: '세트 구성을 선택해주세요.',
+      pasta: '파스타',
+      pizza: '피자',
+      ade: '에이드',
+      added: '호캉스 세트를 장바구니에 담았습니다.'
+    },
+    en: {
+      chooseTitle: 'Choose Your Menu',
+      chooseDesc: 'Choose how you would like to order.',
+      setTitle: 'Set Menu',
+      setDesc: 'Enjoy BOTTEGA with an easy recommended set.',
+      singleTitle: 'À La Carte',
+      singleDesc: 'Choose pasta, pizza, drinks and more individually.',
+      setPageTitle: 'Set Menu',
+      setPageDesc: 'Choose each item to complete your set.',
+      setName: 'Staycation Set',
+      setSub: 'A BOTTEGA set made for in-room dining.',
+      pastaChip: 'Choose 1 Pasta',
+      pizzaChip: 'Choose 1 Pizza',
+      adeChip: 'Choose 2 Ades',
+      selectComposition: 'Choose Items',
+      builderTitle: 'Staycation Set',
+      builderGuide: 'Choose 1 pasta, 1 pizza and 2 ades.',
+      pastaStep: '1. Choose Pasta',
+      pizzaStep: '2. Choose Pizza',
+      adeStep: '3. Choose 2 Ades',
+      addSet: 'Add Set to Cart · 49,000 KRW',
+      soldout: 'Sold Out',
+      noPasta: 'No pasta is currently available.',
+      noPizza: 'No pizza is currently available.',
+      noAde: 'No ade drinks were found.',
+      summaryEmpty: 'Please choose your set items.',
+      pasta: 'Pasta',
+      pizza: 'Pizza',
+      ade: 'Ade',
+      added: 'Staycation Set added to cart.'
+    },
+    ja: {
+      chooseTitle: 'Choose Your Menu',
+      chooseDesc: 'ご希望の注文方法を選択してください。',
+      setTitle: 'セットメニュー',
+      setDesc: 'BOTTEGAおすすめのセットを手軽にお楽しみください。',
+      singleTitle: '単品メニュー',
+      singleDesc: 'パスタ、ピザ、ドリンクなどを自由にお選びいただけます。',
+      setPageTitle: 'セットメニュー',
+      setPageDesc: 'お好みのメニューを選んでセットを完成してください。',
+      setName: 'ステイケーションセット',
+      setSub: '客室で楽しむBOTTEGAおすすめセット',
+      pastaChip: 'パスタ 1品',
+      pizzaChip: 'ピザ 1品',
+      adeChip: 'エイド 2杯',
+      selectComposition: '内容を選択',
+      builderTitle: 'ステイケーションセット',
+      builderGuide: 'パスタ1品・ピザ1品・エイド2杯をお選びください。',
+      pastaStep: '1. パスタを選択',
+      pizzaStep: '2. ピザを選択',
+      adeStep: '3. エイドを2杯選択',
+      addSet: 'セットをカートへ · 49,000ウォン',
+      soldout: '売り切れ',
+      noPasta: '選択可能なパスタがありません。',
+      noPizza: '選択可能なピザがありません。',
+      noAde: 'エイドメニューがありません。',
+      summaryEmpty: 'セット内容を選択してください。',
+      pasta: 'パスタ',
+      pizza: 'ピザ',
+      ade: 'エイド',
+      added: 'セットをカートに追加しました。'
+    },
+    zh: {
+      chooseTitle: 'Choose Your Menu',
+      chooseDesc: '请选择您想要的点餐方式。',
+      setTitle: '套餐',
+      setDesc: '轻松享用BOTTEGA推荐组合。',
+      singleTitle: '单点菜单',
+      singleDesc: '可自由选择意面、披萨、饮料等。',
+      setPageTitle: '套餐',
+      setPageDesc: '逐项选择，完成您的套餐。',
+      setName: '度假套餐',
+      setSub: '适合客房用餐的BOTTEGA推荐组合',
+      pastaChip: '意面 1份',
+      pizzaChip: '披萨 1份',
+      adeChip: '果味汽水 2杯',
+      selectComposition: '选择组合',
+      builderTitle: '度假套餐',
+      builderGuide: '请选择1份意面、1份披萨和2杯果味汽水。',
+      pastaStep: '1. 选择意面',
+      pizzaStep: '2. 选择披萨',
+      adeStep: '3. 选择2杯饮料',
+      addSet: '加入购物车 · 49,000韩元',
+      soldout: '售罄',
+      noPasta: '暂无可选意面。',
+      noPizza: '暂无可选披萨。',
+      noAde: '暂无可选果味汽水。',
+      summaryEmpty: '请选择套餐内容。',
+      pasta: '意面',
+      pizza: '披萨',
+      ade: '饮料',
+      added: '套餐已加入购物车。'
+    }
+  };
+
+  function setT(key) {
+    return setUiText[currentLanguage]?.[key] || setUiText.ko[key] || key;
+  }
+
+  function applySetMenuTranslations() {
+    const map = {
+      'order-mode-title': 'chooseTitle',
+      'order-mode-description': 'chooseDesc',
+      'set-mode-title': 'setTitle',
+      'set-mode-description': 'setDesc',
+      'single-mode-title': 'singleTitle',
+      'single-mode-description': 'singleDesc',
+      'set-mode-tab': 'setTitle',
+      'single-mode-tab': 'singleTitle',
+      'set-page-title': 'setPageTitle',
+      'set-page-description': 'setPageDesc',
+      'staycation-set-name': 'setName',
+      'staycation-set-sub': 'setSub',
+      'set-chip-pasta': 'pastaChip',
+      'set-chip-pizza': 'pizzaChip',
+      'set-chip-ade': 'adeChip',
+      'set-start-button': 'selectComposition',
+      'set-builder-title': 'builderTitle',
+      'set-builder-guide': 'builderGuide',
+      'set-step-pasta-title': 'pastaStep',
+      'set-step-pizza-title': 'pizzaStep',
+      'set-step-ade-title': 'adeStep',
+      'set-builder-add': 'addSet'
+    };
+
+    Object.entries(map).forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = setT(key);
+    });
+
+    if (document.getElementById('set-builder-overlay')?.classList.contains('show')) {
+      renderSetBuilderOptions();
+    }
+  }
+
+  function selectOrderMode(mode) {
+    currentOrderMode = mode;
+
+    const home = document.getElementById('order-mode-home');
+    const switcher = document.getElementById('order-mode-switch');
+    const setPage = document.getElementById('set-menu-page');
+    const singlePage = document.getElementById('single-menu-page');
+    const setTab = document.getElementById('set-mode-tab');
+    const singleTab = document.getElementById('single-mode-tab');
+
+    home.style.display = 'none';
+    switcher.classList.add('show');
+
+    const isSet = mode === 'set';
+    setPage.classList.toggle('show', isSet);
+    singlePage.classList.toggle('show', !isSet);
+    setTab.classList.toggle('active', isSet);
+    singleTab.classList.toggle('active', !isSet);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetOrderModeHome() {
+    currentOrderMode = '';
+    document.getElementById('order-mode-home').style.display = '';
+    document.getElementById('order-mode-switch').classList.remove('show');
+    document.getElementById('set-menu-page').classList.remove('show');
+    document.getElementById('single-menu-page').classList.remove('show');
+  }
+
+  function getSetMenuName(menu) {
+    if (currentLanguage === 'en' && menu.name_en) return menu.name_en;
+    if (currentLanguage === 'ja' && menu.name_ja) return menu.name_ja;
+    if (currentLanguage === 'zh' && menu.name_zh) return menu.name_zh;
+    return menu.name || '';
+  }
+
+  function getSetCandidates(type) {
+    const visible = allMenus.filter(menu => menu.is_hidden !== true);
+
+    if (type === 'pasta') {
+      return visible.filter(menu => String(menu.category || '').toUpperCase() === 'PASTA');
+    }
+
+    if (type === 'pizza') {
+      return visible.filter(menu => String(menu.category || '').toUpperCase() === 'PIZZA');
+    }
+
+    return visible.filter(menu => {
+      const category = String(menu.category || '').toUpperCase();
+      const names = [
+        menu.name, menu.name_en, menu.name_ja, menu.name_zh
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      const beverageCategory =
+        ['음료','BEVERAGE','BEVERAGES','DRINK','DRINKS'].includes(category) ||
+        category.includes('BEVERAGE') ||
+        category.includes('DRINK');
+
+      const looksLikeAde =
+        names.includes('에이드') ||
+        names.includes('ade') ||
+        names.includes('エイド');
+
+      return beverageCategory && looksLikeAde;
+    });
+  }
+
+  function renderSetMenuPage() {
+    applySetMenuTranslations();
+  }
+
+  function openSetBuilder() {
+    if (!isOrderingAllowed()) return;
+
+    setSelection = { pasta: null, pizza: null, ades: [] };
+    renderSetBuilderOptions();
+
+    document.getElementById('set-builder-overlay').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSetBuilder() {
+    document.getElementById('set-builder-overlay').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  function setBuilderBackgroundClose(event) {
+    if (event.target === event.currentTarget) closeSetBuilder();
+  }
+
+  function optionHtml(menu, type) {
+    const soldOut = isMenuSoldOut(menu);
+    const id = Number(menu.id);
+    let checked = false;
+
+    if (type === 'pasta') checked = Number(setSelection.pasta) === id;
+    if (type === 'pizza') checked = Number(setSelection.pizza) === id;
+    if (type === 'ade') checked = setSelection.ades.includes(id);
+
+    return `
+      <label class="set-option ${checked ? 'selected' : ''} ${soldOut ? 'disabled' : ''}">
+        <input
+          type="${type === 'ade' ? 'checkbox' : 'radio'}"
+          name="set-${type}"
+          ${checked ? 'checked' : ''}
+          ${soldOut ? 'disabled' : ''}
+          onchange="selectSetOption('${type}', ${id}, this.checked)"
+        >
+        <span class="set-option-name">${escapeHtml(getSetMenuName(menu))}</span>
+        ${soldOut ? `<span class="set-option-soldout">${escapeHtml(setT('soldout'))}</span>` : ''}
+      </label>
+    `;
+  }
+
+  function renderSetBuilderOptions() {
+    const pasta = getSetCandidates('pasta');
+    const pizza = getSetCandidates('pizza');
+    const ades = getSetCandidates('ade');
+
+    const pastaBox = document.getElementById('set-pasta-options');
+    const pizzaBox = document.getElementById('set-pizza-options');
+    const adeBox = document.getElementById('set-ade-options');
+
+    pastaBox.innerHTML = pasta.length
+      ? pasta.map(menu => optionHtml(menu, 'pasta')).join('')
+      : `<div class="set-builder-empty">${escapeHtml(setT('noPasta'))}</div>`;
+
+    pizzaBox.innerHTML = pizza.length
+      ? pizza.map(menu => optionHtml(menu, 'pizza')).join('')
+      : `<div class="set-builder-empty">${escapeHtml(setT('noPizza'))}</div>`;
+
+    adeBox.innerHTML = ades.length
+      ? ades.map(menu => optionHtml(menu, 'ade')).join('')
+      : `<div class="set-builder-empty">${escapeHtml(setT('noAde'))}</div>`;
+
+    updateSetBuilderSummary();
+  }
+
+  function selectSetOption(type, menuId, checked) {
+    menuId = Number(menuId);
+
+    if (type === 'pasta') {
+      setSelection.pasta = menuId;
+    } else if (type === 'pizza') {
+      setSelection.pizza = menuId;
+    } else {
+      if (checked) {
+        if (setSelection.ades.length >= 2) {
+          alert(currentLanguage === 'ko' ? '에이드는 2개까지 선택할 수 있습니다.' : 'Please choose up to 2 ades.');
+          renderSetBuilderOptions();
+          return;
+        }
+        setSelection.ades.push(menuId);
+      } else {
+        setSelection.ades = setSelection.ades.filter(id => id !== menuId);
+      }
+    }
+
+    renderSetBuilderOptions();
+  }
+
+  function updateSetBuilderSummary() {
+    const getMenu = id => allMenus.find(menu => Number(menu.id) === Number(id));
+    const pasta = getMenu(setSelection.pasta);
+    const pizza = getMenu(setSelection.pizza);
+    const ades = setSelection.ades.map(getMenu).filter(Boolean);
+
+    const summary = document.getElementById('set-builder-summary');
+    const addButton = document.getElementById('set-builder-add');
+
+    const lines = [];
+    if (pasta) lines.push(`<b>${escapeHtml(setT('pasta'))}</b> · ${escapeHtml(getSetMenuName(pasta))}`);
+    if (pizza) lines.push(`<b>${escapeHtml(setT('pizza'))}</b> · ${escapeHtml(getSetMenuName(pizza))}`);
+    if (ades.length) lines.push(`<b>${escapeHtml(setT('ade'))}</b> · ${ades.map(getSetMenuName).map(escapeHtml).join(' / ')}`);
+
+    summary.innerHTML = lines.length ? lines.join('<br>') : escapeHtml(setT('summaryEmpty'));
+
+    const complete = Boolean(pasta && pizza && ades.length === 2);
+    addButton.disabled = !complete;
+  }
+
+  function makeSetCartId() {
+    const raw = [
+      setSelection.pasta,
+      setSelection.pizza,
+      ...setSelection.ades.slice().sort((a,b) => a-b)
+    ].join('-');
+
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+      hash |= 0;
+    }
+    return -Math.abs(hash || Date.now());
+  }
+
+  function addSelectedSetToCart() {
+    const getMenu = id => allMenus.find(menu => Number(menu.id) === Number(id));
+    const pasta = getMenu(setSelection.pasta);
+    const pizza = getMenu(setSelection.pizza);
+    const ades = setSelection.ades.map(getMenu).filter(Boolean);
+
+    if (!pasta || !pizza || ades.length !== 2) return;
+
+    const componentKo = `파스타: ${pasta.name || ''} / 피자: ${pizza.name || ''} / 에이드: ${ades.map(x => x.name || '').join(', ')}`;
+    const componentEn = `Pasta: ${pasta.name_en || pasta.name || ''} / Pizza: ${pizza.name_en || pizza.name || ''} / Ade: ${ades.map(x => x.name_en || x.name || '').join(', ')}`;
+    const componentJa = `パスタ: ${pasta.name_ja || pasta.name || ''} / ピザ: ${pizza.name_ja || pizza.name || ''} / エイド: ${ades.map(x => x.name_ja || x.name || '').join(', ')}`;
+    const componentZh = `意面: ${pasta.name_zh || pasta.name || ''} / 披萨: ${pizza.name_zh || pizza.name || ''} / 饮料: ${ades.map(x => x.name_zh || x.name || '').join(', ')}`;
+
+    const setId = makeSetCartId();
+    const existing = cart.find(item => Number(item.id) === Number(setId));
+
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cart.push({
+        id: setId,
+        name: `호캉스 세트 [${componentKo}]`,
+        name_en: `Staycation Set [${componentEn}]`,
+        name_ja: `ステイケーションセット [${componentJa}]`,
+        name_zh: `度假套餐 [${componentZh}]`,
+        price: 49000,
+        quantity: 1
+      });
+    }
+
+    updateCartBar();
+    closeSetBuilder();
+    openCart();
+  }
+
+
   /* 초기 실행 */
 
   document.documentElement.lang =
@@ -5357,6 +6196,8 @@ function changeCutleryQty(change) {
 
   applyTranslations();
 
+  applySetMenuTranslations();
+
   showRoomInfo();
 
   handlePaymentChange();
@@ -5366,6 +6207,9 @@ function changeCutleryQty(change) {
   loadCategoryTranslations()
     .then(
       () => loadMenus()
+    )
+    .then(
+      () => renderSetMenuPage()
     );
 
   loadServiceStatus();
