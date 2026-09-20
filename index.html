@@ -932,6 +932,8 @@ body {
 #single-menu-area.hidden{display:none}
 .set-customer-list{padding:16px 15px 110px;display:grid;gap:14px}
 .set-customer-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:0 5px 18px rgba(0,0,0,.04)}
+.set-customer-image{width:100%;aspect-ratio:16/9;border-radius:11px;overflow:hidden;background:#eee;margin-bottom:13px}.set-customer-image img{width:100%;height:100%;object-fit:cover;display:block}
+
 .set-customer-card h3{margin:0 0 5px;font-size:20px}.set-customer-price{font-size:19px;font-weight:800;margin:9px 0}.set-customer-desc{font-size:13px;color:#756d68;line-height:1.55}
 .set-customer-tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.set-customer-tag{font-size:11px;background:#f2efec;border-radius:999px;padding:5px 8px}
 .set-config-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3000;display:none;align-items:flex-end;justify-content:center}
@@ -3848,6 +3850,7 @@ main,
         'Choose set items';
 
       return `<article class="set-customer-card">
+        ${set.image_url ? `<div class="set-customer-image"><img src="${escapeHtml(set.image_url)}" alt="${escapeHtml(text.name || set.name || '세트메뉴')}"></div>` : ''}
         <h3>${escapeHtml(text.name || set.name || '')}</h3>
         ${text.description ? `<div class="set-customer-desc">${escapeHtml(text.description)}</div>` : ''}
         <div class="set-customer-tags">${tags}</div>
