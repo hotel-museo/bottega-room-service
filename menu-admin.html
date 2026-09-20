@@ -747,6 +747,15 @@ header p {
 .set-field label { display:block; margin-bottom:6px; font-size:11px; font-weight:800; color:#555; }
 .set-field input,.set-field textarea,.set-field select { width:100%; border:1px solid #ddd; border-radius:9px; padding:10px 11px; background:#fff; }
 .set-field textarea { resize:vertical; min-height:72px; }
+.set-photo-box{border:1px solid #e3e3e3;border-radius:12px;padding:12px;margin-bottom:12px;background:#fafafa}
+.set-photo-preview{width:100%;height:210px;border-radius:10px;background:#eee;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;overflow:hidden;margin-bottom:9px}
+.set-photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.set-photo-file{width:100%;font-size:11px;margin-bottom:9px}
+.set-photo-actions{display:flex;gap:7px}.set-photo-actions .btn{flex:1}
+.set-photo-hint{font-size:10px;color:#888;line-height:1.5;margin-top:7px}
+.set-list-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;background:#eee;flex:none}
+.set-list-main{min-width:0;flex:1}.set-list-row{display:flex;gap:10px;align-items:center}
+
 .set-list { display:flex; flex-direction:column; gap:8px; }
 .set-list-item { border:1px solid #e4e4e4; border-radius:10px; padding:12px; cursor:pointer; background:#fafafa; }
 .set-list-item.active { border-color:#111; background:#f0f0f0; }
@@ -964,7 +973,7 @@ header p {
     <div class="panel-head">
       <div>
         <h2>세트메뉴 관리</h2>
-        <p>세트명·가격·구성 메뉴를 설정합니다. 구성 메뉴 사진은 단품 메뉴 사진을 자동으로 사용합니다.</p>
+        <p>세트명·가격·대표사진·구성 메뉴를 설정합니다. 세트 대표사진은 고객 주문페이지의 세트 카드에 표시됩니다.</p>
       </div>
       <button class="btn btn-green" type="button" onclick="newSetMenu()">+ 새 세트</button>
     </div>
@@ -981,7 +990,18 @@ header p {
 
       <div class="set-admin-card">
         <h3 id="set-editor-title">새 세트 만들기</h3>
-        <p class="sub">사진은 별도 등록하지 않습니다. 주문페이지에서 선택 가능한 단품 메뉴의 기존 사진을 자동으로 보여줍니다.</p>
+        <p class="sub">세트 대표사진을 등록할 수 있습니다. 구성 선택 화면의 개별 메뉴 사진은 기존 단품 메뉴 사진을 그대로 사용합니다.</p>
+
+        <div class="set-photo-box">
+          <div class="set-field" style="margin-bottom:8px;"><label>세트 대표사진</label></div>
+          <div class="set-photo-preview" id="set-image-preview">세트를 먼저 저장한 뒤 사진을 등록해주세요.</div>
+          <input id="set-image-file" class="set-photo-file" type="file" accept="image/jpeg,image/png,image/webp">
+          <div class="set-photo-actions">
+            <button class="btn btn-black" id="set-image-upload-btn" type="button" onclick="uploadSetImage()">사진 추가 / 수정</button>
+            <button class="btn btn-gray" id="set-image-delete-btn" type="button" onclick="deleteSetImage()">사진 삭제</button>
+          </div>
+          <div class="set-photo-hint">JPG / PNG / WEBP · 최대 5MB · 새 세트는 먼저 저장한 뒤 사진을 등록해주세요.</div>
+        </div>
 
         <div class="set-field"><label>세트명</label><input id="set-name" placeholder="예: 호캉스 세트"></div>
         <div class="set-field"><label>세트 설명</label><textarea id="set-description" placeholder="예: 객실에서 편하게 즐기는 BOTTEGA 추천 구성"></textarea></div>
@@ -6108,6 +6128,65 @@ let allSetMenus = [];
 let editingSetId = null;
 let setComponentDraft = [];
 
+function getEditingSetMenu(){
+  return allSetMenus.find(x=>Number(x.id)===Number(editingSetId)) || null;
+}
+function renderSetImage(set){
+  const preview=document.getElementById('set-image-preview');
+  const uploadBtn=document.getElementById('set-image-upload-btn');
+  const deleteBtn=document.getElementById('set-image-delete-btn');
+  const fileInput=document.getElementById('set-image-file');
+  if(!preview)return;
+  if(!editingSetId){
+    preview.textContent='세트를 먼저 저장한 뒤 사진을 등록해주세요.';
+    if(uploadBtn)uploadBtn.disabled=true;
+    if(deleteBtn)deleteBtn.disabled=true;
+  }else{
+    if(uploadBtn)uploadBtn.disabled=false;
+    if(set && set.image_url){
+      preview.innerHTML=`<img src="${escapeHtml(set.image_url)}" alt="${escapeHtml(set.name||'세트메뉴')}">`;
+      if(deleteBtn)deleteBtn.disabled=false;
+    }else{
+      preview.textContent='등록된 대표사진이 없습니다.';
+      if(deleteBtn)deleteBtn.disabled=true;
+    }
+  }
+  if(fileInput)fileInput.value='';
+}
+async function uploadSetImage(){
+  const set=getEditingSetMenu();
+  if(!set)return alert('세트를 먼저 저장해주세요.');
+  const input=document.getElementById('set-image-file');
+  const file=input?.files?.[0];
+  if(!file)return alert('업로드할 사진을 선택해주세요.');
+  const allowed=['image/jpeg','image/png','image/webp'];
+  if(!allowed.includes(file.type))return alert('JPG, PNG, WEBP 이미지만 사용할 수 있습니다.');
+  if(file.size>5*1024*1024)return alert('사진 용량은 5MB 이하로 선택해주세요.');
+  const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type]||'jpg';
+  const path=`sets/${Number(set.id)}/${Date.now()}.${ext}`;
+  const oldUrl=set.image_url||null;
+  showSaving(oldUrl?'세트 사진 수정 중...':'세트 사진 업로드 중...');
+  const {error:upErr}=await bottegaAuthClient.storage.from(MENU_IMAGE_BUCKET).upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+  if(upErr){console.error('SET IMAGE UPLOAD ERROR:',upErr);hideSaving();return alert('세트 사진 업로드에 실패했습니다.\n'+(upErr.message||''));}
+  const {data:urlData}=bottegaAuthClient.storage.from(MENU_IMAGE_BUCKET).getPublicUrl(path);
+  const newUrl=urlData?.publicUrl;
+  if(!newUrl){hideSaving();return alert('사진 주소를 생성하지 못했습니다.');}
+  const {error:updateErr}=await bottegaAuthClient.from('set_menus').update({image_url:newUrl,updated_at:new Date().toISOString()}).eq('id',Number(set.id));
+  if(updateErr){await bottegaAuthClient.storage.from(MENU_IMAGE_BUCKET).remove([path]);console.error('SET IMAGE DB ERROR:',updateErr);hideSaving();return alert('세트 사진 정보 저장에 실패했습니다.\n'+(updateErr.message||''));}
+  if(oldUrl){const oldPath=getStoragePathFromPublicUrl(oldUrl);if(oldPath){const {error}=await bottegaAuthClient.storage.from(MENU_IMAGE_BUCKET).remove([oldPath]);if(error)console.warn('OLD SET IMAGE REMOVE ERROR:',error);}}
+  set.image_url=newUrl; renderSetImage(set); renderSetMenuList(); showSaving('세트 사진 저장 완료'); setTimeout(hideSaving,800);
+}
+async function deleteSetImage(){
+  const set=getEditingSetMenu(); if(!set||!set.image_url)return;
+  if(!confirm('세트 대표사진을 삭제하시겠습니까?'))return;
+  const oldUrl=set.image_url; showSaving('세트 사진 삭제 중...');
+  const {error:updateErr}=await bottegaAuthClient.from('set_menus').update({image_url:null,updated_at:new Date().toISOString()}).eq('id',Number(set.id));
+  if(updateErr){console.error('SET IMAGE DELETE DB ERROR:',updateErr);hideSaving();return alert('세트 사진 삭제에 실패했습니다.');}
+  const oldPath=getStoragePathFromPublicUrl(oldUrl); if(oldPath){const {error}=await bottegaAuthClient.storage.from(MENU_IMAGE_BUCKET).remove([oldPath]);if(error)console.warn('SET IMAGE STORAGE DELETE ERROR:',error);}
+  set.image_url=null; renderSetImage(set); renderSetMenuList(); showSaving('세트 사진 삭제 완료'); setTimeout(hideSaving,800);
+}
+
+
 function setMenuAvailableForPicker(menu){ return menu && menu.is_hidden !== true; }
 function getSetCategories(){ return [...new Set(allMenus.filter(setMenuAvailableForPicker).map(m=>String(m.category||'').trim()).filter(Boolean))]; }
 function normalizeSetComponents(config){
@@ -6148,12 +6227,12 @@ function newSetMenu(){
   document.getElementById('set-editor-title').textContent='새 세트 만들기';
   document.getElementById('set-name').value=''; document.getElementById('set-description').value=''; document.getElementById('set-price').value=''; document.getElementById('set-active').value='true';
   document.getElementById('set-delete-btn').style.display='none';
-  setComponentDraft=[]; addSetComponent(); renderSetMenuList();
+  setComponentDraft=[]; addSetComponent(); renderSetImage(null); renderSetMenuList();
 }
 function renderSetMenuList(){
   const box=document.getElementById('set-menu-list'); if(!box)return;
   if(!allSetMenus.length){box.innerHTML='<div class="set-empty">등록된 세트가 없습니다.<br>오른쪽에서 첫 세트를 만들어주세요.</div>';return;}
-  box.innerHTML=allSetMenus.map(set=>{const comps=normalizeSetComponents(set.config); const tags=comps.map(c=>`${escapeHtml(c.category)} ${Number(c.count)}개`).join(' + '); return `<div class="set-list-item ${Number(editingSetId)===Number(set.id)?'active':''}" onclick="editSetMenu(${Number(set.id)})"><div class="set-list-title"><span>${escapeHtml(set.name||'')}</span><span>${Number(set.price||0).toLocaleString()}원</span></div><div class="set-list-meta">${set.is_active===false?'숨김':'판매중'} · ${tags||'구성 없음'}</div></div>`}).join('');
+  box.innerHTML=allSetMenus.map(set=>{const comps=normalizeSetComponents(set.config); const tags=comps.map(c=>`${escapeHtml(c.category)} ${Number(c.count)}개`).join(' + '); const thumb=set.image_url?`<img class="set-list-thumb" src="${escapeHtml(set.image_url)}" alt="">`:`<div class="set-list-thumb"></div>`; return `<div class="set-list-item ${Number(editingSetId)===Number(set.id)?'active':''}" onclick="editSetMenu(${Number(set.id)})"><div class="set-list-row">${thumb}<div class="set-list-main"><div class="set-list-title"><span>${escapeHtml(set.name||'')}</span><span>${Number(set.price||0).toLocaleString()}원</span></div><div class="set-list-meta">${set.is_active===false?'숨김':'판매중'} · ${tags||'구성 없음'}</div></div></div></div>`}).join('');
 }
 async function loadSetMenus(){
   const box=document.getElementById('set-menu-list'); if(box)box.innerHTML='<div class="set-empty">세트 데이터를 불러오는 중입니다.</div>';
@@ -6166,7 +6245,7 @@ function editSetMenu(id){
   editingSetId=Number(id); document.getElementById('set-editor-title').textContent='세트 수정 · '+(set.name||'');
   document.getElementById('set-name').value=set.name||''; document.getElementById('set-description').value=set.description||''; document.getElementById('set-price').value=Number(set.price||0); document.getElementById('set-active').value=set.is_active===false?'false':'true';
   setComponentDraft=normalizeSetComponents(set.config); if(!setComponentDraft.length)addSetComponent(); else renderSetComponents();
-  document.getElementById('set-delete-btn').style.display=''; renderSetMenuList();
+  document.getElementById('set-delete-btn').style.display=''; renderSetImage(set); renderSetMenuList();
 }
 async function saveSetMenu(){
   const name=document.getElementById('set-name').value.trim(), description=document.getElementById('set-description').value.trim(), price=Number(document.getElementById('set-price').value), is_active=document.getElementById('set-active').value==='true';
