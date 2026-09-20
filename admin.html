@@ -868,14 +868,18 @@
     }
     .order-total-label { font-size:13px; font-weight:700; }
     .order-total-price { font-size:22px; font-weight:900; }
-    .order-bottom-actions { display:grid; grid-template-columns:160px 1fr; gap:10px; margin-top:16px; }
+    .order-bottom-actions { display:grid; grid-template-columns:110px 1fr; gap:10px; margin-top:16px; align-items:end; }
     .print-ready-button {
       width:100%; border:1px solid #111; background:#fff; color:#111; border-radius:9px;
       padding:13px 16px; font-size:14px; font-weight:800; cursor:pointer;
     }
     .print-ready-button:hover { background:#f3f3f3; }
+    .print-ready-button { padding:10px 8px; min-height:40px; font-size:13px; }
+    .order-bottom-actions .action-area { display:block; }
+    .order-bottom-actions .cooking-info { margin-bottom:10px; }
+    .order-bottom-actions .complete-button { width:100%; min-height:46px; height:46px; display:flex; align-items:center; justify-content:center; }
     .order-bottom-actions .action-area { margin:0; padding:0; border:0; }
-    .order-bottom-actions .action-button { height:100%; min-height:46px; }
+    .order-bottom-actions .action-button { height:auto; min-height:46px; }
     .order-bottom-actions .pending-action-buttons { height:100%; }
     @media(max-width:700px){
       .order-card-head { align-items:flex-start; }
