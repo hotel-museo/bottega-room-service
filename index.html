@@ -3726,7 +3726,6 @@ main,
       .from('set_menus')
       .select('*')
       .eq('is_active', true)
-      .eq('is_hidden', false)
       .order('sort_order', { ascending: true })
       .order('id', { ascending: true });
 
@@ -3737,8 +3736,7 @@ main,
     }
 
     allSetMenus = (data || []).filter(set =>
-      set.is_active !== false &&
-      set.is_hidden !== true
+      set.is_active !== false
     );
     renderSetMenus();
   }
@@ -3832,7 +3830,11 @@ main,
 
     const ready = currentSetSelections.length > 0 &&
       currentSetSelections.every(g => g.selected_ids.length === Number(g.quantity));
-    document.getElementById('set-config-add').disabled = !ready;
+    const addButton = document.getElementById('set-config-add');
+    addButton.disabled = false;
+    addButton.textContent = ready
+      ? '선택 완료 · 장바구니 담기'
+      : '메뉴 선택 후 장바구니 담기';
   }
 
   function toggleSetChoice(groupIndex, menuId) {
@@ -3854,9 +3856,25 @@ main,
   }
 
   function addConfiguredSetToCart() {
-    if (!currentSetMenu) return;
-    const ready = currentSetSelections.every(g => g.selected_ids.length === Number(g.quantity));
-    if (!ready) return;
+    if (!currentSetMenu) {
+      alert('세트메뉴 정보를 다시 불러와주세요.');
+      return;
+    }
+
+    if (!currentSetSelections.length) {
+      alert('이 세트에 설정된 카테고리 구성이 없습니다. 관리자페이지에서 세트 구성을 확인해주세요.');
+      return;
+    }
+
+    const incomplete = currentSetSelections.find(
+      g => g.selected_ids.length !== Number(g.quantity)
+    );
+
+    if (incomplete) {
+      const label = getCategoryLabel(incomplete.category || '') || '메뉴';
+      alert(`${label}에서 ${Number(incomplete.quantity)}개를 선택해주세요.\n현재 ${incomplete.selected_ids.length}개 선택되어 있습니다.`);
+      return;
+    }
 
     const components = currentSetSelections.map(group => ({
       category: group.category,
