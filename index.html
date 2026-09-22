@@ -389,6 +389,36 @@
       font-weight: bold;
     }
 
+    .checkout-recommendation {
+      margin: 8px 0 12px;
+      padding: 13px 14px;
+      border: 1px solid #eadcc7;
+      border-radius: 10px;
+      background: #faf5ed;
+      color: #5b4630;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .checkout-recommendation strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #2d241b;
+      font-size: 14px;
+    }
+
+    .payment-option.checkout-recommended label {
+      border-color: #d9c4a5;
+      background: #fffaf2;
+      font-weight: bold;
+    }
+
+    .payment-option.checkout-recommended input:checked + label {
+      background: #111;
+      border-color: #111;
+      color: #fff;
+    }
+
     .payment-options {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -932,8 +962,6 @@ body {
 #single-menu-area.hidden{display:none}
 .set-customer-list{padding:16px 15px 110px;display:grid;gap:14px}
 .set-customer-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:16px;box-shadow:0 5px 18px rgba(0,0,0,.04)}
-.set-customer-image{width:100%;aspect-ratio:16/9;border-radius:11px;overflow:hidden;background:#eee;margin-bottom:13px}.set-customer-image img{width:100%;height:100%;object-fit:cover;display:block}
-
 .set-customer-card h3{margin:0 0 5px;font-size:20px}.set-customer-price{font-size:19px;font-weight:800;margin:9px 0}.set-customer-desc{font-size:13px;color:#756d68;line-height:1.55}
 .set-customer-tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.set-customer-tag{font-size:11px;background:#f2efec;border-radius:999px;padding:5px 8px}
 .set-config-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3000;display:none;align-items:flex-end;justify-content:center}
@@ -1825,9 +1853,14 @@ main,
     </div>
 
 
+    <div class="checkout-recommendation" id="checkout-recommendation">
+      <strong id="checkout-recommendation-title">체크아웃 시 결제를 추천드립니다.</strong>
+      <span id="checkout-recommendation-description">룸서비스 이용금액을 객실 요금과 함께 한 번에 결제하실 수 있어 더욱 편리합니다.</span>
+    </div>
+
     <div class="payment-options">
 
-      <div class="payment-option">
+      <div class="payment-option checkout-recommended">
 
         <input
           type="radio"
@@ -2378,8 +2411,10 @@ main,
       total: '총 주문금액',
 
       payment: '결제방법',
-      checkout: '체크아웃 시 결제',
+      checkout: '체크아웃 시 결제 (추천)',
       card: '카드결제',
+      checkoutRecommendTitle: '체크아웃 시 결제를 추천드립니다.',
+      checkoutRecommendDescription: '룸서비스 이용금액을 객실 요금과 함께 한 번에 결제하실 수 있어 더욱 편리합니다.',
 
       cardNotice:
         '카드결제 선택 시 직원이 객실로 방문하여 카드리더기로 결제를 도와드립니다.',
@@ -2512,8 +2547,10 @@ main,
       total: 'Total',
 
       payment: 'Payment Method',
-      checkout: 'Pay at Checkout',
+      checkout: 'Pay at Checkout (Recommended)',
       card: 'Card Payment',
+      checkoutRecommendTitle: 'We recommend paying at checkout.',
+      checkoutRecommendDescription: 'For added convenience, your room service charges can be settled together with your room bill at checkout.',
 
       cardNotice:
         'For card payment, our staff will visit your room with a card reader to assist you.',
@@ -2649,8 +2686,10 @@ main,
       total: '合計金額',
 
       payment: 'お支払い方法',
-      checkout: 'チェックアウト時に支払い',
+      checkout: 'チェックアウト時に支払い（おすすめ）',
       card: 'カード決済',
+      checkoutRecommendTitle: 'チェックアウト時のお支払いをおすすめします。',
+      checkoutRecommendDescription: 'ルームサービス料金を宿泊料金とまとめてチェックアウト時にお支払いいただけるため便利です。',
 
       cardNotice:
         'カード決済を選択された場合、スタッフがカードリーダーを持って客室まで伺います。',
@@ -2785,8 +2824,10 @@ main,
       total: '订单总额',
 
       payment: '付款方式',
-      checkout: '退房时付款',
+      checkout: '退房时付款（推荐）',
       card: '银行卡付款',
+      checkoutRecommendTitle: '推荐您选择退房时付款。',
+      checkoutRecommendDescription: '客房送餐费用可与房费一起在退房时统一结算，更加方便。',
 
       cardNotice:
         '选择银行卡付款后，工作人员将携带刷卡机前往您的房间协助付款。',
@@ -3448,6 +3489,18 @@ main,
 
 
     document.getElementById(
+      'checkout-recommendation-title'
+    ).textContent =
+      t('checkoutRecommendTitle');
+
+
+    document.getElementById(
+      'checkout-recommendation-description'
+    ).textContent =
+      t('checkoutRecommendDescription');
+
+
+    document.getElementById(
       'card-label'
     ).textContent =
       t('card');
@@ -3850,7 +3903,6 @@ main,
         'Choose set items';
 
       return `<article class="set-customer-card">
-        ${set.image_url ? `<div class="set-customer-image"><img src="${escapeHtml(set.image_url)}" alt="${escapeHtml(text.name || set.name || '세트메뉴')}"></div>` : ''}
         <h3>${escapeHtml(text.name || set.name || '')}</h3>
         ${text.description ? `<div class="set-customer-desc">${escapeHtml(text.description)}</div>` : ''}
         <div class="set-customer-tags">${tags}</div>
