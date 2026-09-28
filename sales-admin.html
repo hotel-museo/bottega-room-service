@@ -1138,52 +1138,30 @@
   }
 
 
-  function formatDateTime(
-    value
-  ) {
+  function formatKstDate(value, includeTime = false) {
+    if (!value) return includeTime ? '-' : '';
 
-    if (!value) {
-      return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return includeTime ? '-' : '';
+
+    const options = {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    };
+
+    if (includeTime) {
+      options.hour = '2-digit';
+      options.minute = '2-digit';
+      options.hour12 = false;
     }
 
+    return new Intl.DateTimeFormat('ko-KR', options).format(date);
+  }
 
-    const date =
-      new Date(
-        value
-      );
-
-
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-      return '-';
-    }
-
-
-    return new Intl.DateTimeFormat(
-      'ko-KR',
-      {
-        timeZone:
-          'Asia/Seoul',
-        year:
-          'numeric',
-        month:
-          '2-digit',
-        day:
-          '2-digit',
-        hour:
-          '2-digit',
-        minute:
-          '2-digit',
-        hour12:
-          false
-      }
-    ).format(
-      date
-    );
-
+  function formatDateTime(value) {
+    return formatKstDate(value, true);
   }
 
 
@@ -1281,43 +1259,19 @@
   }
 
 
-  function setTodayRange() {
-
-    const today =
-      getTodayKstString();
-
-
-    document.getElementById(
-      'start-date'
-    ).value =
-      today;
-
-    document.getElementById(
-      'end-date'
-    ).value =
-      today;
-
-
+  function setDateRange(startDate, endDate) {
+    document.getElementById('start-date').value = startDate;
+    document.getElementById('end-date').value = endDate;
     loadSalesData();
-
   }
 
+  function setTodayRange() {
+    const today = getTodayKstString();
+    setDateRange(today, today);
+  }
 
   function setMonthRange() {
-
-    document.getElementById(
-      'start-date'
-    ).value =
-      getMonthStartString();
-
-    document.getElementById(
-      'end-date'
-    ).value =
-      getTodayKstString();
-
-
-    loadSalesData();
-
+    setDateRange(getMonthStartString(), getTodayKstString());
   }
 
 
@@ -2048,46 +2002,8 @@
   // 08. 엑셀 내보내기
   // ============================================================
 
-  function formatExcelDate(
-    value
-  ) {
-
-    if (!value) {
-      return '';
-    }
-
-
-    const date =
-      new Date(
-        value
-      );
-
-
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-      return '';
-    }
-
-
-    return new Intl.DateTimeFormat(
-      'ko-KR',
-      {
-        timeZone:
-          'Asia/Seoul',
-        year:
-          'numeric',
-        month:
-          '2-digit',
-        day:
-          '2-digit'
-      }
-    ).format(
-      date
-    );
-
+  function formatExcelDate(value) {
+    return formatKstDate(value, false);
   }
 
 
