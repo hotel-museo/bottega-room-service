@@ -1602,6 +1602,16 @@ function escapeJs(value) {
 
 }
 
+// ===== 공통 DOM 접근 =====
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function fieldValue(id) {
+  return byId(id)?.value?.trim?.() || '';
+}
+
+
 
 function showSaving(text) {
 
@@ -1691,14 +1701,14 @@ function updateAdminViewUrl(
    02. 관리자 화면 전환 / 네비게이션
    ============================== */
 function showView(viewName = 'sort') {
-  const sortView = document.getElementById('sort-view');
-  const setView = document.getElementById('set-view');
-  const designView = document.getElementById('design-view');
-  const sortButton = document.getElementById('sidebar-sort');
-  const setButton = document.getElementById('sidebar-set');
-  const designButton = document.getElementById('sidebar-design');
-  const title = document.getElementById('admin-page-title');
-  const subtitle = document.getElementById('admin-page-subtitle');
+  const sortView = byId('sort-view');
+  const setView = byId('set-view');
+  const designView = byId('design-view');
+  const sortButton = byId('sidebar-sort');
+  const setButton = byId('sidebar-set');
+  const designButton = byId('sidebar-design');
+  const title = byId('admin-page-title');
+  const subtitle = byId('admin-page-subtitle');
 
   const isDesign = viewName === 'design';
   const isSet = viewName === 'set';
@@ -3222,10 +3232,10 @@ function modalBackgroundClose(event) {
 
 async function saveModalBasicInfo() {
   if (modalMenuId === null) return;
-  const name = document.getElementById('modal-name').value.trim();
-  const description = document.getElementById('modal-description').value.trim();
-  const price = Number(document.getElementById('modal-price').value);
-  const category = document.getElementById('modal-category').value;
+  const name = fieldValue('modal-name');
+  const description = fieldValue('modal-description');
+  const price = Number(byId('modal-price').value);
+  const category = byId('modal-category').value;
   if (!name) { alert('한국어 메뉴명을 입력해주세요.'); return; }
   if (!Number.isFinite(price) || price < 0) { alert('가격을 확인해주세요.'); return; }
   if (!category) { alert('카테고리를 선택해주세요.'); return; }
@@ -4347,10 +4357,10 @@ async function translateMissingMenus() {
    09. 신규 메뉴 / 신규 카테고리
    ============================== */
 async function addNewMenu() {
-  const name = document.getElementById('new-menu-name').value.trim();
-  const description = document.getElementById('new-menu-description').value.trim();
-  const price = Number(document.getElementById('new-menu-price').value);
-  const category = document.getElementById('new-menu-category').value;
+  const name = fieldValue('new-menu-name');
+  const description = fieldValue('new-menu-description');
+  const price = Number(byId('new-menu-price').value);
+  const category = byId('new-menu-category').value;
   if (!name) { alert('한국어 메뉴명을 입력해주세요.'); return; }
   if (!Number.isFinite(price) || price < 0) { alert('가격을 확인해주세요.'); return; }
   if (!category) { alert('카테고리를 먼저 추가해주세요.'); return; }
@@ -4358,14 +4368,14 @@ async function addNewMenu() {
   showSaving('새 메뉴 저장 중...');
   const { error } = await supabaseClient.from('menus').insert({ name, name_en:null, name_ja:null, name_zh:null, description:description||null, description_en:null, description_ja:null, description_zh:null, price, category, sort_order:maxSort+1, is_available:true, is_hidden:false, sold_out_until:null });
   if (error) { console.error(error); hideSaving(); alert('메뉴 추가에 실패했습니다.\n'+(error.message||'')); return; }
-  document.getElementById('new-menu-name').value=''; document.getElementById('new-menu-price').value=''; document.getElementById('new-menu-description').value='';
+  document.getElementById('new-menu-name').value=''; byId('new-menu-price').value=''; document.getElementById('new-menu-description').value='';
   tempCategories=tempCategories.filter(item=>item!==category); await loadMenus(); showSaving('새 메뉴 추가 완료 · 번역은 전체 번역에서 진행하세요.'); setTimeout(hideSaving,900);
 }
 
 async function translateAllContent() {
   if (!confirm('한국어 → 영어 번역 후, 확정된 영어를 기준으로 일본어 · 중국어를 전체 번역하시겠습니까?\n\n번역관리에서 잠금한 항목은 덮어쓰지 않습니다.')) return;
 
-  const button = document.getElementById('translate-all-content-button');
+  const button = byId('translate-all-content-button');
   if (button) { button.disabled = true; button.textContent = '전체 번역 중...'; }
   const failures = [];
 
