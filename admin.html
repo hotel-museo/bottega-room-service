@@ -1,4 +1,16 @@
 <!DOCTYPE html>
+<!--
+  BOTTEGA ROOM SERVICE · ADMIN
+  2차 세분화: 단일 HTML 유지 + 기능 영역별 내부 모듈 정리
+  기능/DB 구조 변경 없음.
+  MODULE 01 AUTH
+  MODULE 02 SERVICE STATUS
+  MODULE 03 ORDER DATA
+  MODULE 04 DISPLAY HELPERS
+  MODULE 05 ORDER ACTIONS
+  MODULE 06 RENDER / PRINT
+  MODULE 07 SAFE OUTPUT
+-->
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -6,6 +18,10 @@
   <title>BOTTEGA 주문관리</title>
 
   <style>
+/* =========================================================
+   BOTTEGA ADMIN · STYLE
+   01. 기본 레이아웃 / 사이드바 / 주문관리 UI
+   ========================================================= */
     * {
       box-sizing: border-box;
     }
@@ -1257,6 +1273,10 @@ const bottegaAuthStorage = {
       }
     );
 
+  /* =========================================================
+     ADMIN MODULE 01 · AUTH
+     로그인 확인 / 로그아웃 / 관리자 세션
+     ========================================================= */
   async function requireAdminLogin() {
     const {
       data,
@@ -1385,6 +1405,10 @@ const bottegaAuthStorage = {
      영업상태 불러오기
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 02 · SERVICE STATUS
+     룸서비스 운영상태 조회 / 변경
+     ========================================================= */
   async function loadServiceStatus() {
 
     const {
@@ -1601,6 +1625,10 @@ const bottegaAuthStorage = {
      주문 불러오기
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 03 · ORDER DATA
+     주문 조회 / 요약 집계 / 필터
+     ========================================================= */
   async function loadOrders() {
 
     const {
@@ -1879,6 +1907,10 @@ const bottegaAuthStorage = {
      주문 상태
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 04 · DISPLAY HELPERS
+     상태 / 결제 / 시간 표시용 공통 함수
+     ========================================================= */
   function getStatusText(
     status
   ) {
@@ -2265,6 +2297,10 @@ const bottegaAuthStorage = {
      주문별 버튼
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 05 · ORDER ACTIONS
+     주문 수락 / 예상시간 / 거절 / 완료
+     ========================================================= */
   function getActionButton(
     order
   ) {
@@ -3101,6 +3137,10 @@ const bottegaAuthStorage = {
      주문 카드 그리기
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 06 · RENDER / PRINT
+     세트 구성 표시 / 주문서 인쇄 / 주문카드 렌더링
+     ========================================================= */
   function getSetComponentLines(item) {
     const raw = item && (
       item.set_components ||
@@ -3253,6 +3293,10 @@ const bottegaAuthStorage = {
      HTML 보호
   ========================= */
 
+  /* =========================================================
+     ADMIN MODULE 07 · SAFE OUTPUT
+     HTML 출력 안전 처리
+     ========================================================= */
   function escapeHtml(
     value
   ) {
