@@ -13,7 +13,11 @@ const supabaseClient=supabase.createClient('https://yookspgooyewhnkobckw.supabas
 /* =========================================================
    03. COMMON UI HELPERS
    ========================================================= */
-function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}function saving(t){const e=document.getElementById('saving');e.textContent=t;e.classList.add('show')}function done(){document.getElementById('saving').classList.remove('show')}
+function esc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function byId(id){return document.getElementById(id)}
+function fieldValue(id){return byId(id)?.value.trim()||''}
+function saving(t){const e=byId('saving');e.textContent=t;e.classList.add('show')}
+function done(){byId('saving').classList.remove('show')}
 async function requireLogin(){const {data,error}=await supabaseClient.auth.getUser();if(error||!data?.user){location.replace('login.html');return false}document.documentElement.classList.add('auth-ready');return true}async function adminLogout(){await supabaseClient.auth.signOut({scope:'local'});localStorage.removeItem(BOTTEGA_REMEMBER_KEY);sessionStorage.removeItem(BOTTEGA_REMEMBER_KEY);location.replace('login.html')}
 /* =========================================================
    04. DATA LOAD / CATEGORY STATE
@@ -50,32 +54,37 @@ async function translateTextFromEnglish(text,target,maxRetries=3){
   }
   throw new Error(lastError?.message||'번역 실패');
 }
+async function translateEnglishPair(source){
+  const ja=await translateTextFromEnglish(source,'ja');
+  await waitTranslation(250);
+  const zh=await translateTextFromEnglish(source,'zh');
+  return {ja,zh};
+}
+
 async function translateCategoryFromEnglish(){
-  const en=document.getElementById('cat-en')?.value.trim()||'';
+  const en=fieldValue('cat-en');
   if(!en){alert('영어 번역을 먼저 입력하거나 수정해주세요.');return}
   saving('영어 기준 일본어 · 중국어 번역 중...');
   try{
-    const ja=await translateTextFromEnglish(en,'ja'); await waitTranslation(250);
-    const zh=await translateTextFromEnglish(en,'zh');
-    document.getElementById('cat-ja').value=ja;
-    document.getElementById('cat-zh').value=zh;
+    const {ja,zh}=await translateEnglishPair(en);
+    byId('cat-ja').value=ja;
+    byId('cat-zh').value=zh;
     saving('번역 완료 · 내용을 확인 후 번역 저장을 눌러주세요.');setTimeout(done,1200);
   }catch(e){done();alert('일본어 · 중국어 번역에 실패했습니다.\n'+(e.message||''))}
 }
 async function translateMenuFromEnglish(id){
-  const nameEn=document.getElementById(`n-en-${id}`)?.value.trim()||'';
-  const descEn=document.getElementById(`d-en-${id}`)?.value.trim()||'';
+  const nameEn=fieldValue(`n-en-${id}`);
+  const descEn=fieldValue(`d-en-${id}`);
   if(!nameEn){alert('영어 메뉴명을 먼저 입력하거나 수정해주세요.');return}
   saving('영어 기준 일본어 · 중국어 번역 중...');
   try{
-    const nameJa=await translateTextFromEnglish(nameEn,'ja'); await waitTranslation(250);
-    const nameZh=await translateTextFromEnglish(nameEn,'zh'); await waitTranslation(250);
-    let descJa='',descZh='';
-    if(descEn){descJa=await translateTextFromEnglish(descEn,'ja');await waitTranslation(250);descZh=await translateTextFromEnglish(descEn,'zh')}
-    document.getElementById(`n-ja-${id}`).value=nameJa;
-    document.getElementById(`n-zh-${id}`).value=nameZh;
-    document.getElementById(`d-ja-${id}`).value=descJa;
-    document.getElementById(`d-zh-${id}`).value=descZh;
+    const namePair=await translateEnglishPair(nameEn);
+    let descPair={ja:'',zh:''};
+    if(descEn){await waitTranslation(250);descPair=await translateEnglishPair(descEn)}
+    byId(`n-ja-${id}`).value=namePair.ja;
+    byId(`n-zh-${id}`).value=namePair.zh;
+    byId(`d-ja-${id}`).value=descPair.ja;
+    byId(`d-zh-${id}`).value=descPair.zh;
     saving('번역 완료 · 내용을 확인 후 번역 저장을 눌러주세요.');setTimeout(done,1200);
   }catch(e){done();alert('일본어 · 중국어 번역에 실패했습니다.\n'+(e.message||''))}
 }
@@ -84,8 +93,8 @@ async function translateMenuFromEnglish(id){
    07. SAVE / TRANSLATION LOCKS
    ========================================================= */
 async function saveLocks(){const {error}=await supabaseClient.from('site_settings').upsert({key:'translation_locks',settings:locks},{onConflict:'key'});if(error)throw error}async function toggleMenuLock(id){locks.menus[String(id)]=!locks.menus[String(id)];await saveLocks();render()}async function toggleCategoryLock(){locks.categories[current]=!locks.categories[current];await saveLocks();renderCategory()}
-async function saveMenu(id){saving('메뉴 번역 저장 중...');const payload={name_en:document.getElementById(`n-en-${id}`).value.trim()||null,name_ja:document.getElementById(`n-ja-${id}`).value.trim()||null,name_zh:document.getElementById(`n-zh-${id}`).value.trim()||null,description_en:document.getElementById(`d-en-${id}`).value.trim()||null,description_ja:document.getElementById(`d-ja-${id}`).value.trim()||null,description_zh:document.getElementById(`d-zh-${id}`).value.trim()||null};const {error}=await supabaseClient.from('menus').update(payload).eq('id',id);if(error){done();alert('저장 실패\n'+(error.message||''));return}locks.menus[String(id)]=true;await saveLocks();await load();saving('번역 저장 완료 · 자동 잠금됨');setTimeout(done,900)}
-async function saveCategory(){saving('카테고리 번역 저장 중...');const old=categoryTranslations[current]||{};categoryTranslations[current]={ko:old.ko||current,en:document.getElementById('cat-en').value.trim(),ja:document.getElementById('cat-ja').value.trim(),zh:document.getElementById('cat-zh').value.trim()};let r=await supabaseClient.from('site_settings').upsert({key:'category_translations',settings:categoryTranslations},{onConflict:'key'});if(r.error){done();alert('저장 실패\n'+(r.error.message||''));return}locks.categories[current]=true;await saveLocks();renderCategory();saving('카테고리 번역 저장 완료 · 자동 잠금됨');setTimeout(done,900)}
+async function saveMenu(id){saving('메뉴 번역 저장 중...');const payload={name_en:fieldValue(`n-en-${id}`)||null,name_ja:fieldValue(`n-ja-${id}`)||null,name_zh:fieldValue(`n-zh-${id}`)||null,description_en:fieldValue(`d-en-${id}`)||null,description_ja:fieldValue(`d-ja-${id}`)||null,description_zh:fieldValue(`d-zh-${id}`)||null};const {error}=await supabaseClient.from('menus').update(payload).eq('id',id);if(error){done();alert('저장 실패\n'+(error.message||''));return}locks.menus[String(id)]=true;await saveLocks();await load();saving('번역 저장 완료 · 자동 잠금됨');setTimeout(done,900)}
+async function saveCategory(){saving('카테고리 번역 저장 중...');const old=categoryTranslations[current]||{};categoryTranslations[current]={ko:old.ko||current,en:fieldValue('cat-en'),ja:fieldValue('cat-ja'),zh:fieldValue('cat-zh')};let r=await supabaseClient.from('site_settings').upsert({key:'category_translations',settings:categoryTranslations},{onConflict:'key'});if(r.error){done();alert('저장 실패\n'+(r.error.message||''));return}locks.categories[current]=true;await saveLocks();renderCategory();saving('카테고리 번역 저장 완료 · 자동 잠금됨');setTimeout(done,900)}
 /* =========================================================
    08. INITIALIZATION
    ========================================================= */
