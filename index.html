@@ -3073,6 +3073,7 @@ main,
     );
 
 
+  /* ===== 02. 다국어 공통 / 금액 / 주문토큰 ===== */
   function t(key) {
 
     return (
@@ -3117,6 +3118,7 @@ main,
   }
 
 
+  /* ===== 03. 룸서비스 영업상태 ===== */
   function isOrderingAllowed() {
 
     return (
@@ -3364,6 +3366,7 @@ main,
   }
 
 
+  /* ===== 04. 언어 선택 / 화면 번역 ===== */
   function setLanguage(lang) {
 
     if (
@@ -3595,6 +3598,7 @@ main,
   }
 
 
+  /* ===== 05. 객실정보 ===== */
   function showRoomInfo() {
 
     const roomInfo =
@@ -3691,6 +3695,7 @@ main,
 
 
 
+  /* ===== 06. 카테고리 번역 / 메뉴 데이터 ===== */
   async function loadCategoryTranslations() {
     const { data, error } =
       await supabaseClient
@@ -4890,6 +4895,7 @@ function changeCutleryQty(change) {
 
 }
 
+  /* ===== 10. 주문 전송 ===== */
   async function submitOrder() {
 
     /*
@@ -5284,6 +5290,7 @@ function changeCutleryQty(change) {
   }
 
 
+  /* ===== 11. 주문상태 조회 / 거절·완료 안내 ===== */
   function showStatusPage() {
 
     document.getElementById(
@@ -5662,6 +5669,7 @@ function changeCutleryQty(change) {
   }
 
 
+  /* ===== 12. 새 주문 / 공통 안전출력 ===== */
   function startNewOrder() {
 
     localStorage.removeItem(
