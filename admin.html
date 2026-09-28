@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   BOTTEGA ROOM SERVICE · ADMIN
-  2차 세분화: 단일 HTML 유지 + 기능 영역별 내부 모듈 정리
+  3차 세분화: 단일 HTML 유지 + 공통 초기화 중복 제거
   기능/DB 구조 변경 없음.
   MODULE 01 AUTH
   MODULE 02 SERVICE STATUS
@@ -1259,10 +1259,13 @@ const bottegaAuthStorage = {
 };
 
 
+  const SUPABASE_URL = 'https://yookspgooyewhnkobckw.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_uI5l3LBZPrZfuXJDLXMEqg_zFS3cbLp';
+
   const bottegaAuthClient =
     supabase.createClient(
-      'https://yookspgooyewhnkobckw.supabase.co',
-      'sb_publishable_uI5l3LBZPrZfuXJDLXMEqg_zFS3cbLp',
+      SUPABASE_URL,
+      SUPABASE_KEY,
       {
         auth: {
           persistSession: true,
@@ -1313,18 +1316,8 @@ const bottegaAuthStorage = {
 
 <script>
 
-  const SUPABASE_URL =
-    'https://yookspgooyewhnkobckw.supabase.co';
-
-  const SUPABASE_KEY =
-    'sb_publishable_uI5l3LBZPrZfuXJDLXMEqg_zFS3cbLp';
-
-
-  const supabaseClient =
-    supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
+  /* 인증과 DB 요청이 동일한 세션/클라이언트를 사용하도록 중복 초기화 제거 */
+  const supabaseClient = bottegaAuthClient;
 
 
   let allOrders = [];
