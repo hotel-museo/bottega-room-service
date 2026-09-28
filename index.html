@@ -2035,7 +2035,13 @@ main,
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ===== 공통 DOM 접근 =====
+function byId(id) {
+  return document.getElementById(id);
+}
+
+</script>
 
 <script>
 
@@ -3420,7 +3426,7 @@ main,
     renderCart();
 
     renderSetMenus();
-    if (currentSetMenu && document.getElementById('set-config-overlay')?.classList.contains('show')) {
+    if (currentSetMenu && byId('set-config-overlay')?.classList.contains('show')) {
       getSetLocalizedText(currentSetMenu).then(localizedSet => {
         document.getElementById('set-config-name').textContent = localizedSet.name || currentSetMenu.name || '';
         renderSetConfigGroups();
@@ -3934,12 +3940,12 @@ main,
     document.getElementById('set-config-name').textContent = localizedSet.name || set.name || '';
     document.getElementById('set-config-price').textContent = formatWon(Number(set.price || 0));
     renderSetConfigGroups();
-    document.getElementById('set-config-overlay').classList.add('show');
+    byId('set-config-overlay').classList.add('show');
     document.body.style.overflow = 'hidden';
   }
 
   function closeSetConfig() {
-    document.getElementById('set-config-overlay').classList.remove('show');
+    byId('set-config-overlay').classList.remove('show');
     document.body.style.overflow = '';
     currentSetMenu = null;
     currentSetSelections = [];
