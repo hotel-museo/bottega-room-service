@@ -1439,6 +1439,9 @@ const bottegaAuthStorage = {
       }
     );
 
+  /* ==============================
+     01. 관리자 인증 / 로그아웃
+     ============================== */
   async function requireAdminLogin() {
     const {
       data,
@@ -1684,6 +1687,9 @@ function updateAdminViewUrl(
 
 }
 
+/* ==============================
+   02. 관리자 화면 전환 / 네비게이션
+   ============================== */
 function showView(viewName = 'sort') {
   const sortView = document.getElementById('sort-view');
   const setView = document.getElementById('set-view');
@@ -1733,6 +1739,9 @@ function showView(viewName = 'sort') {
 
 let translationLocks = { menus: {}, categories: {} };
 
+/* ==============================
+   03. 번역 잠금 / 카테고리 번역 데이터
+   ============================== */
 async function loadTranslationLocks() {
   const { data, error } = await supabaseClient.from('site_settings').select('settings').eq('key','translation_locks').maybeSingle();
   if (error) { console.error('TRANSLATION LOCKS LOAD ERROR:', error); translationLocks = {menus:{},categories:{}}; return; }
@@ -1788,6 +1797,9 @@ function getCategoryTranslationDraft(category) {
   };
 }
 
+/* ==============================
+   04. 메뉴 데이터 로딩 / 품절 상태
+   ============================== */
 async function loadMenus() {
 
   const {
@@ -2250,6 +2262,9 @@ function currentSortMenus() {
    메뉴 드래그
 ========================= */
 
+/* ==============================
+   05. 메뉴 목록 렌더링 / 순서 관리
+   ============================== */
 function renderSortList() {
 
   const list =
@@ -2696,6 +2711,9 @@ function getStoragePathFromPublicUrl(url) {
 }
 
 
+/* ==============================
+   06. 메뉴 수정 모달 / 이미지 관리
+   ============================== */
 function renderModalImage(menu) {
 
   const preview =
@@ -3511,6 +3529,9 @@ async function deleteModalMenu() {
 }
 
 
+/* ==============================
+   07. 카테고리 관리
+   ============================== */
 async function deleteCategory(
   category
 ) {
@@ -3892,6 +3913,10 @@ function fillCategorySelect() {
    한국어 → 영어 / 일본어 / 중국어
 ========================= */
 
+/* ==============================
+   08. 자동 번역 / 전체 번역
+   한국어 → 영어 → 일본어·중국어 흐름 유지
+   ============================== */
 async function sleepTranslation(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -4318,6 +4343,9 @@ async function translateMissingMenus() {
 }
 
 
+/* ==============================
+   09. 신규 메뉴 / 신규 카테고리
+   ============================== */
 async function addNewMenu() {
   const name = document.getElementById('new-menu-name').value.trim();
   const description = document.getElementById('new-menu-description').value.trim();
@@ -4722,6 +4750,9 @@ function getLiveThemeValues() {
 }
 
 
+/* ==============================
+   10. 주문페이지 디자인 / 테마 미리보기
+   ============================== */
 function applyLiveThemePreview() {
 
   const frame =
@@ -6131,6 +6162,9 @@ let setComponentDraft = [];
 function getEditingSetMenu(){
   return allSetMenus.find(x=>Number(x.id)===Number(editingSetId)) || null;
 }
+/* ==============================
+   11. 세트메뉴 관리
+   ============================== */
 function renderSetImage(set){
   const preview=document.getElementById('set-image-preview');
   const uploadBtn=document.getElementById('set-image-upload-btn');
@@ -6263,6 +6297,9 @@ async function deleteSetMenu(){
   showSaving('세트 삭제 중...'); const {error}=await supabaseClient.from('set_menus').delete().eq('id',editingSetId); if(error){console.error(error);hideSaving();alert('세트 삭제에 실패했습니다.');return;} editingSetId=null; await loadSetMenus(); newSetMenu(); showSaving('세트 삭제 완료'); setTimeout(hideSaving,800);
 }
 
+/* ==============================
+   12. 페이지 초기화
+   ============================== */
 async function initializeAdminPage() {
 
   const authenticated =
